@@ -3,19 +3,28 @@
  * Contiene todas las vistas y funcionalidades principales
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { CATEGORIAS, TIPOS_INGRESO, BANCOS, CATEGORIAS_METAS } from '../utils/constants.js';
 import Calculations from '../utils/calculations.js';
 import Modal from './Modal.jsx';
-import GraficoCategorias from './GraficoCategorias.jsx';
-import FormularioTarjeta from './forms/FormularioTarjeta.jsx';
-import FormularioTransaccion from './forms/FormularioTransaccion.jsx';
-import FormularioRecurrencia from './forms/FormularioRecurrencia.jsx';
-import FormularioPagoTarjeta from './forms/FormularioPagoTarjeta.jsx';
-import FormularioPagoAdelantado from './forms/FormularioPagoAdelantado.jsx';
-import SimuladorMovimiento from './forms/SimuladorMovimiento.jsx';
-import FormularioMeta from './forms/FormularioMeta.jsx';
-import FormularioAporteMeta from './forms/FormularioAporteMeta.jsx';
+
+// Lazy loading de componentes pesados
+const GraficoCategorias = lazy(() => import('./GraficoCategorias.jsx'));
+const FormularioTarjeta = lazy(() => import('./forms/FormularioTarjeta.jsx'));
+const FormularioTransaccion = lazy(() => import('./forms/FormularioTransaccion.jsx'));
+const FormularioRecurrencia = lazy(() => import('./forms/FormularioRecurrencia.jsx'));
+const FormularioPagoTarjeta = lazy(() => import('./forms/FormularioPagoTarjeta.jsx'));
+const FormularioPagoAdelantado = lazy(() => import('./forms/FormularioPagoAdelantado.jsx'));
+const SimuladorMovimiento = lazy(() => import('./forms/SimuladorMovimiento.jsx'));
+const FormularioMeta = lazy(() => import('./forms/FormularioMeta.jsx'));
+const FormularioAporteMeta = lazy(() => import('./forms/FormularioAporteMeta.jsx'));
+
+// Componente de loading
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center py-8">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  </div>
+);
 
 const Dashboard = ({ userData, onUpdateData }) => {
   // Estados UI
@@ -49,6 +58,11 @@ const Dashboard = ({ userData, onUpdateData }) => {
   const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
   const [fechaInicio, setFechaInicio] = useState(primerDiaMes.toISOString().split('T')[0]);
   const [fechaFin, setFechaFin] = useState(hoy.toISOString().split('T')[0]);
+
+  // Paginación de transacciones
+  const [paginaActual, setPaginaActual] = useState(1);
+  const transaccionesPorPagina = 50;
+  const MAX_TRANSACCIONES = 10000; // Límite máximo para performance
 
   // Procesar recurrencias pendientes al cargar
   useEffect(() => {
@@ -565,7 +579,9 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 <h2 className={`text-xl font-bold mb-6 ${textClass}`}>
                   📊 Gastos por Categoría (Período Seleccionado)
                 </h2>
-                <GraficoCategorias gastosPorCategoria={gastosPorCategoria} />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <GraficoCategorias gastosPorCategoria={gastosPorCategoria} />
+                </Suspense>
               </div>
             )}
 
@@ -763,20 +779,49 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 <p className={textSecondaryClass}>Comienza registrando tus movimientos</p>
               </div>
             ) : (
-              <div className={`${cardClass} rounded-2xl shadow-lg overflow-hidden`}>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
-                      <tr>
-                        <th className={`px-6 py-4 text-left text-xs font-semibold uppercase ${textSecondaryClass}`}>Fecha</th>
-                        <th className={`px-6 py-4 text-left text-xs font-semibold uppercase ${textSecondaryClass}`}>Descripción</th>
-                        <th className={`px-6 py-4 text-left text-xs font-semibold uppercase ${textSecondaryClass}`}>Categoría</th>
-                        <th className={`px-6 py-4 text-right text-xs font-semibold uppercase ${textSecondaryClass}`}>Monto</th>
-                        <th className={`px-6 py-4 text-center text-xs font-semibold uppercase ${textSecondaryClass}`}>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                      {[...userData.transacciones].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 100).map((t) => {
+              <>
+                {/* Advertencia si hay demasiadas transacciones */}
+                {userData.transacciones.length > MAX_TRANSACCIONES && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+                    <p className="text-sm text-yellow-800">
+                      ⚠️ <strong>Alerta de Performance:</strong> Tienes {userData.transacciones.length.toLocaleString()} transacciones.
+                      Se recomienda exportar y archivar transacciones antiguas para mantener el rendimiento óptimo.
+                    </p>
+                  </div>
+                )}
+
+                <div className={`${cardClass} rounded-2xl shadow-lg overflow-hidden`}>
+                  {/* Información de paginación */}
+                  <div className={`px-6 py-3 border-b ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex justify-between items-center">
+                      <p className={`text-sm ${textSecondaryClass}`}>
+                        Mostrando {Math.min((paginaActual - 1) * transaccionesPorPagina + 1, userData.transacciones.length)} - {Math.min(paginaActual * transaccionesPorPagina, userData.transacciones.length)} de {userData.transacciones.length.toLocaleString()} transacciones
+                      </p>
+                      <p className={`text-xs ${textSecondaryClass}`}>
+                        {transaccionesPorPagina} por página
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
+                        <tr>
+                          <th className={`px-6 py-4 text-left text-xs font-semibold uppercase ${textSecondaryClass}`}>Fecha</th>
+                          <th className={`px-6 py-4 text-left text-xs font-semibold uppercase ${textSecondaryClass}`}>Descripción</th>
+                          <th className={`px-6 py-4 text-left text-xs font-semibold uppercase ${textSecondaryClass}`}>Categoría</th>
+                          <th className={`px-6 py-4 text-right text-xs font-semibold uppercase ${textSecondaryClass}`}>Monto</th>
+                          <th className={`px-6 py-4 text-center text-xs font-semibold uppercase ${textSecondaryClass}`}>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                        {(() => {
+                          const transaccionesOrdenadas = [...userData.transacciones].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+                          const indiceInicio = (paginaActual - 1) * transaccionesPorPagina;
+                          const indiceFin = indiceInicio + transaccionesPorPagina;
+                          const transaccionesPagina = transaccionesOrdenadas.slice(indiceInicio, indiceFin);
+
+                          return transaccionesPagina.map((t) => {
                         const categoria = CATEGORIAS.find(c => c.valor === t.categoria) || TIPOS_INGRESO.find(c => c.valor === t.categoria);
                         const fechaLocal = new Date(t.fecha + 'T12:00:00');
                         return (
@@ -845,11 +890,101 @@ const Dashboard = ({ userData, onUpdateData }) => {
                             </td>
                           </tr>
                         );
-                      })}
-                    </tbody>
-                  </table>
+                          });
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Controles de paginación */}
+                  <div className={`px-6 py-4 border-t ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={() => setPaginaActual(Math.max(1, paginaActual - 1))}
+                        disabled={paginaActual === 1}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                          paginaActual === 1
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                        }`}
+                      >
+                        ← Anterior
+                      </button>
+
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const totalPaginas = Math.ceil(userData.transacciones.length / transaccionesPorPagina);
+                          const paginasVisibles = [];
+                          const rango = 2;
+
+                          // Siempre mostrar primera página
+                          if (paginaActual > rango + 1) {
+                            paginasVisibles.push(
+                              <button
+                                key={1}
+                                onClick={() => setPaginaActual(1)}
+                                className="px-3 py-1 rounded-lg hover:bg-blue-100 text-sm"
+                              >
+                                1
+                              </button>
+                            );
+                            if (paginaActual > rango + 2) {
+                              paginasVisibles.push(<span key="dots1" className="px-2">...</span>);
+                            }
+                          }
+
+                          // Páginas alrededor de la actual
+                          for (let i = Math.max(1, paginaActual - rango); i <= Math.min(totalPaginas, paginaActual + rango); i++) {
+                            paginasVisibles.push(
+                              <button
+                                key={i}
+                                onClick={() => setPaginaActual(i)}
+                                className={`px-3 py-1 rounded-lg text-sm ${
+                                  i === paginaActual
+                                    ? 'bg-blue-500 text-white font-bold'
+                                    : 'hover:bg-blue-100'
+                                }`}
+                              >
+                                {i}
+                              </button>
+                            );
+                          }
+
+                          // Siempre mostrar última página
+                          if (paginaActual < totalPaginas - rango) {
+                            if (paginaActual < totalPaginas - rango - 1) {
+                              paginasVisibles.push(<span key="dots2" className="px-2">...</span>);
+                            }
+                            paginasVisibles.push(
+                              <button
+                                key={totalPaginas}
+                                onClick={() => setPaginaActual(totalPaginas)}
+                                className="px-3 py-1 rounded-lg hover:bg-blue-100 text-sm"
+                              >
+                                {totalPaginas}
+                              </button>
+                            );
+                          }
+
+                          return paginasVisibles;
+                        })()}
+                      </div>
+
+                      <button
+                        onClick={() => setPaginaActual(Math.min(Math.ceil(userData.transacciones.length / transaccionesPorPagina), paginaActual + 1))}
+                        disabled={paginaActual >= Math.ceil(userData.transacciones.length / transaccionesPorPagina)}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                          paginaActual >= Math.ceil(userData.transacciones.length / transaccionesPorPagina)
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                        }`}
+                      >
+                        Siguiente →
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         )}
@@ -1288,37 +1423,53 @@ const Dashboard = ({ userData, onUpdateData }) => {
         )}
       </main>
 
-      {/* Modales */}
+      {/* Modales con Lazy Loading */}
       <Modal isOpen={modalTarjeta} onClose={() => { setModalTarjeta(false); setTarjetaEditar(null); }} title={tarjetaEditar ? 'Editar Tarjeta' : 'Nueva Tarjeta'}>
-        <FormularioTarjeta tarjeta={tarjetaEditar} onSave={handleSaveTarjeta} onDelete={handleDeleteTarjeta} onClose={() => { setModalTarjeta(false); setTarjetaEditar(null); }} />
+        <Suspense fallback={<LoadingSpinner />}>
+          <FormularioTarjeta tarjeta={tarjetaEditar} transacciones={userData.transacciones} onSave={handleSaveTarjeta} onDelete={handleDeleteTarjeta} onClose={() => { setModalTarjeta(false); setTarjetaEditar(null); }} />
+        </Suspense>
       </Modal>
 
       <Modal isOpen={modalTransaccion} onClose={() => { setModalTransaccion(false); setTransaccionEditar(null); }} title={transaccionEditar ? `Editar ${tipoTransaccion}` : `Registrar ${tipoTransaccion}`}>
-        <FormularioTransaccion tipo={tipoTransaccion} tarjetas={userData.tarjetas} transaccionEditar={transaccionEditar} onSave={handleSaveTransaccion} onClose={() => { setModalTransaccion(false); setTransaccionEditar(null); }} />
+        <Suspense fallback={<LoadingSpinner />}>
+          <FormularioTransaccion tipo={tipoTransaccion} tarjetas={userData.tarjetas} transaccionEditar={transaccionEditar} onSave={handleSaveTransaccion} onClose={() => { setModalTransaccion(false); setTransaccionEditar(null); }} />
+        </Suspense>
       </Modal>
 
       <Modal isOpen={modalRecurrencia} onClose={() => { setModalRecurrencia(false); setRecurrenciaEditar(null); }} title={recurrenciaEditar ? 'Editar Recurrencia' : 'Nueva Recurrencia'}>
-        <FormularioRecurrencia recurrencia={recurrenciaEditar} tarjetas={userData.tarjetas} onSave={handleSaveRecurrencia} onDelete={handleDeleteRecurrencia} onClose={() => { setModalRecurrencia(false); setRecurrenciaEditar(null); }} />
+        <Suspense fallback={<LoadingSpinner />}>
+          <FormularioRecurrencia recurrencia={recurrenciaEditar} tarjetas={userData.tarjetas} onSave={handleSaveRecurrencia} onDelete={handleDeleteRecurrencia} onClose={() => { setModalRecurrencia(false); setRecurrenciaEditar(null); }} />
+        </Suspense>
       </Modal>
 
       <Modal isOpen={modalSimulador} onClose={() => { setModalSimulador(false); setSimulacionActual(null); setProyeccionSimulada(null); }} title="🔮 Simulador de Movimientos" size="lg">
-        <SimuladorMovimiento proyeccion={proyeccionSimulada} tarjetas={userData.tarjetas} onSimular={handleSimular} onCerrar={() => { setModalSimulador(false); setSimulacionActual(null); setProyeccionSimulada(null); }} />
+        <Suspense fallback={<LoadingSpinner />}>
+          <SimuladorMovimiento proyeccion={proyeccionSimulada} tarjetas={userData.tarjetas} onSimular={handleSimular} onCerrar={() => { setModalSimulador(false); setSimulacionActual(null); setProyeccionSimulada(null); }} />
+        </Suspense>
       </Modal>
 
       <Modal isOpen={modalPagoTarjeta} onClose={() => { setModalPagoTarjeta(false); setTarjetaPagar(null); }} title={`💳 Pagar ${tarjetaPagar?.nombre || 'Tarjeta'}`}>
-        {tarjetaPagar && <FormularioPagoTarjeta tarjeta={tarjetaPagar} efectivoDisponible={efectivoDisponible} onPagar={handlePagarTarjeta} onClose={() => { setModalPagoTarjeta(false); setTarjetaPagar(null); }} />}
+        <Suspense fallback={<LoadingSpinner />}>
+          {tarjetaPagar && <FormularioPagoTarjeta tarjeta={tarjetaPagar} efectivoDisponible={efectivoDisponible} onPagar={handlePagarTarjeta} onClose={() => { setModalPagoTarjeta(false); setTarjetaPagar(null); }} />}
+        </Suspense>
       </Modal>
 
       <Modal isOpen={modalPagoAdelantado} onClose={() => { setModalPagoAdelantado(false); setTransaccionPagarAdelantado(null); }} title="💳 Pago Adelantado de Cuotas">
-        {transaccionPagarAdelantado && <FormularioPagoAdelantado transaccion={transaccionPagarAdelantado} efectivoDisponible={efectivoDisponible} onPagar={handlePagarCuotasAdelantadas} onClose={() => { setModalPagoAdelantado(false); setTransaccionPagarAdelantado(null); }} />}
+        <Suspense fallback={<LoadingSpinner />}>
+          {transaccionPagarAdelantado && <FormularioPagoAdelantado transaccion={transaccionPagarAdelantado} efectivoDisponible={efectivoDisponible} onPagar={handlePagarCuotasAdelantadas} onClose={() => { setModalPagoAdelantado(false); setTransaccionPagarAdelantado(null); }} />}
+        </Suspense>
       </Modal>
 
       <Modal isOpen={modalMeta} onClose={() => { setModalMeta(false); setMetaEditar(null); }} title={metaEditar ? 'Editar Meta' : 'Nueva Meta de Ahorro'}>
-        <FormularioMeta meta={metaEditar} onSave={handleSaveMeta} onDelete={handleDeleteMeta} onClose={() => { setModalMeta(false); setMetaEditar(null); }} />
+        <Suspense fallback={<LoadingSpinner />}>
+          <FormularioMeta meta={metaEditar} onSave={handleSaveMeta} onDelete={handleDeleteMeta} onClose={() => { setModalMeta(false); setMetaEditar(null); }} />
+        </Suspense>
       </Modal>
 
       <Modal isOpen={modalAporteMeta} onClose={() => { setModalAporteMeta(false); setMetaAportar(null); }} title={`💰 ${metaAportar?.nombre || 'Meta de Ahorro'}`}>
-        {metaAportar && <FormularioAporteMeta meta={metaAportar} disponibleParaAhorrar={disponibleParaAhorrar} onAportar={handleAportarMeta} onClose={() => { setModalAporteMeta(false); setMetaAportar(null); }} />}
+        <Suspense fallback={<LoadingSpinner />}>
+          {metaAportar && <FormularioAporteMeta meta={metaAportar} disponibleParaAhorrar={disponibleParaAhorrar} onAportar={handleAportarMeta} onClose={() => { setModalAporteMeta(false); setMetaAportar(null); }} />}
+        </Suspense>
       </Modal>
 
       {/* Botones Flotantes Móviles */}

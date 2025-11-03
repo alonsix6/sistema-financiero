@@ -5,6 +5,26 @@
 
 const Calculations = {
   /**
+   * Ajusta un día a un mes válido (maneja edge cases como día 31 en febrero)
+   * @param {number} year - Año
+   * @param {number} month - Mes (0-11)
+   * @param {number} day - Día deseado
+   * @returns {Date} Fecha ajustada
+   */
+  ajustarDiaAlMes: (year, month, day) => {
+    // Crear fecha con el día deseado
+    const fecha = new Date(year, month, day);
+
+    // Si el mes cambió, significa que el día no existe en ese mes
+    // Retornar el último día del mes deseado
+    if (fecha.getMonth() !== month) {
+      return new Date(year, month + 1, 0); // Día 0 del mes siguiente = último día del mes actual
+    }
+
+    return fecha;
+  },
+
+  /**
    * Calcula la fecha de cobro de una compra con tarjeta
    * @param {string} fechaGasto - Fecha del gasto (YYYY-MM-DD)
    * @param {number} diaCierre - Día de cierre de la tarjeta
@@ -16,16 +36,41 @@ const Calculations = {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    let fechaCierre = new Date(fecha.getFullYear(), fecha.getMonth(), diaCierre);
+    // Calcular fecha de cierre (ajustada al mes)
+    let yearCierre = fecha.getFullYear();
+    let mesCierre = fecha.getMonth();
+
     if (fecha.getDate() > diaCierre) {
-      fechaCierre.setMonth(fechaCierre.getMonth() + 1);
+      mesCierre++;
+      if (mesCierre > 11) {
+        mesCierre = 0;
+        yearCierre++;
+      }
     }
 
-    let fechaPago = new Date(fechaCierre.getFullYear(), fechaCierre.getMonth() + 1, diaPago);
+    const fechaCierre = Calculations.ajustarDiaAlMes(yearCierre, mesCierre, diaCierre);
+
+    // Calcular fecha de pago (un mes después del cierre, ajustada)
+    let yearPago = fechaCierre.getFullYear();
+    let mesPago = fechaCierre.getMonth() + 1;
+
+    if (mesPago > 11) {
+      mesPago = 0;
+      yearPago++;
+    }
+
+    let fechaPago = Calculations.ajustarDiaAlMes(yearPago, mesPago, diaPago);
     fechaPago.setHours(0, 0, 0, 0);
 
+    // Si la fecha de pago ya pasó, mover al siguiente mes
     if (fechaPago <= hoy) {
-      fechaPago.setMonth(fechaPago.getMonth() + 1);
+      mesPago++;
+      if (mesPago > 11) {
+        mesPago = 0;
+        yearPago++;
+      }
+      fechaPago = Calculations.ajustarDiaAlMes(yearPago, mesPago, diaPago);
+      fechaPago.setHours(0, 0, 0, 0);
     }
 
     return fechaPago;
