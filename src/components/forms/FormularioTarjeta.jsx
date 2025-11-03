@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import { BANCOS } from '../../utils/constants.js';
 
-const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete }) => {
+const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete, transacciones = [] }) => {
   const [formData, setFormData] = useState(tarjeta || {
     nombre: '',
     banco: 'BCP',
@@ -16,8 +16,53 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete }) => {
     saldoActual: 0
   });
 
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Validar fechas
+    const cierre = parseInt(formData.fechaCierre);
+    const pago = parseInt(formData.fechaPago);
+
+    if (isNaN(cierre) || cierre < 1 || cierre > 31) {
+      newErrors.fechaCierre = 'El día de cierre debe estar entre 1 y 31';
+    }
+
+    if (isNaN(pago) || pago < 1 || pago > 31) {
+      newErrors.fechaPago = 'El día de pago debe estar entre 1 y 31';
+    }
+
+    // Advertir sobre días no válidos en todos los meses
+    if (cierre > 28 && !newErrors.fechaCierre) {
+      newErrors.fechaCierre = `⚠️ El día ${cierre} no existe en todos los meses. Se ajustará automáticamente.`;
+    }
+
+    if (pago > 28 && !newErrors.fechaPago) {
+      newErrors.fechaPago = `⚠️ El día ${pago} no existe en todos los meses. Se ajustará automáticamente.`;
+    }
+
+    // Validar límite
+    const limite = parseFloat(formData.limite);
+    if (isNaN(limite) || limite <= 0) {
+      newErrors.limite = 'El límite debe ser mayor a 0';
+    }
+
+    setErrors(newErrors);
+
+    // Solo bloquear si hay errores críticos (no advertencias)
+    return !Object.keys(newErrors).some(key =>
+      !newErrors[key].startsWith('⚠️')
+    );
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     onSave({
       ...formData,
       id: tarjeta?.id || Date.now(),
@@ -26,6 +71,31 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete }) => {
       fechaPago: parseInt(formData.fechaPago),
       saldoActual: parseFloat(tarjeta?.saldoActual || 0)
     });
+  };
+
+  const handleDelete = () => {
+    if (!tarjeta) return;
+
+    // Verificar si hay transacciones asociadas
+    const transaccionesAsociadas = transacciones.filter(t =>
+      (t.metodoPago && parseInt(t.metodoPago) === tarjeta.id) ||
+      (t.tarjetaId && t.tarjetaId === tarjeta.id)
+    );
+
+    if (transaccionesAsociadas.length > 0) {
+      const mensaje = `⚠️ ADVERTENCIA: Esta tarjeta tiene ${transaccionesAsociadas.length} transacción(es) asociada(s).\n\n` +
+        `Si eliminas esta tarjeta:\n` +
+        `- Las transacciones NO se eliminarán\n` +
+        `- Los cálculos podrían verse afectados\n` +
+        `- Se perderá el historial de la tarjeta\n\n` +
+        `¿Estás seguro de que quieres eliminar "${tarjeta.nombre}"?`;
+
+      if (!confirm(mensaje)) return;
+    } else {
+      if (!confirm(`¿Eliminar la tarjeta "${tarjeta.nombre}"?`)) return;
+    }
+
+    onDelete(tarjeta.id);
   };
 
   return (
@@ -56,8 +126,9 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete }) => {
           <input
             type="text"
             value={formData.ultimos4}
-            onChange={(e) => setFormData({ ...formData, ultimos4: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, ultimos4: e.target.value.replace(/\D/g, '').slice(0, 4) })}
             maxLength="4"
+            placeholder="1234"
             className="w-full px-4 py-3 border rounded-xl"
           />
         </div>
@@ -67,9 +138,12 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete }) => {
             type="number"
             value={formData.limite}
             onChange={(e) => setFormData({ ...formData, limite: e.target.value })}
-            className="w-full px-4 py-3 border rounded-xl"
+            step="0.01"
+            min="0"
+            className={`w-full px-4 py-3 border rounded-xl ${errors.limite ? 'border-red-500' : ''}`}
             required
           />
+          {errors.limite && <p className="text-xs text-red-600 mt-1">{errors.limite}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Día Cierre *</label>
@@ -79,9 +153,15 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete }) => {
             onChange={(e) => setFormData({ ...formData, fechaCierre: e.target.value })}
             min="1"
             max="31"
-            className="w-full px-4 py-3 border rounded-xl"
+            placeholder="15"
+            className={`w-full px-4 py-3 border rounded-xl ${errors.fechaCierre && !errors.fechaCierre.startsWith('⚠️') ? 'border-red-500' : ''}`}
             required
           />
+          {errors.fechaCierre && (
+            <p className={`text-xs mt-1 ${errors.fechaCierre.startsWith('⚠️') ? 'text-yellow-600' : 'text-red-600'}`}>
+              {errors.fechaCierre}
+            </p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Día Pago *</label>
@@ -91,19 +171,30 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete }) => {
             onChange={(e) => setFormData({ ...formData, fechaPago: e.target.value })}
             min="1"
             max="31"
-            className="w-full px-4 py-3 border rounded-xl"
+            placeholder="5"
+            className={`w-full px-4 py-3 border rounded-xl ${errors.fechaPago && !errors.fechaPago.startsWith('⚠️') ? 'border-red-500' : ''}`}
             required
           />
+          {errors.fechaPago && (
+            <p className={`text-xs mt-1 ${errors.fechaPago.startsWith('⚠️') ? 'text-yellow-600' : 'text-red-600'}`}>
+              {errors.fechaPago}
+            </p>
+          )}
         </div>
+      </div>
+
+      {/* Información adicional */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+        <p className="text-xs text-blue-800">
+          💡 <strong>Nota:</strong> Si configuras un día mayor a 28, el sistema ajustará automáticamente la fecha en meses que no tengan ese día (ej: 31 en febrero se ajustará al último día del mes).
+        </p>
       </div>
 
       {tarjeta && (
         <div className="pt-4 border-t">
           <button
             type="button"
-            onClick={() => {
-              if (confirm(`¿Eliminar la tarjeta "${tarjeta.nombre}"?`)) onDelete(tarjeta.id);
-            }}
+            onClick={handleDelete}
             className="w-full px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 font-medium"
           >
             🗑️ Eliminar Tarjeta
