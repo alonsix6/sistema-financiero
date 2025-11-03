@@ -38,8 +38,6 @@ Sistema completo de gestión financiera personal con seguimiento de tarjetas de 
 
 ```
 sistema-financiero/
-├── public/
-│   └── index.html              # HTML principal
 ├── src/
 │   ├── components/             # Componentes React
 │   │   ├── forms/              # Formularios
@@ -61,7 +59,10 @@ sistema-financiero/
 │   ├── styles/
 │   │   └── main.css            # Estilos globales
 │   ├── App.jsx                 # Componente principal
-│   └── index.js                # Punto de entrada
+│   └── index.jsx               # Punto de entrada
+├── index.html                  # HTML principal
+├── vite.config.js              # Configuración de Vite
+├── vercel.json                 # Configuración de Vercel
 ├── package.json
 ├── .gitignore
 └── README.md
@@ -69,31 +70,40 @@ sistema-financiero/
 
 ## 🚀 Instalación y Uso
 
-### Opción 1: Servidor Simple (Sin instalación)
+### Desarrollo Local
 
 ```bash
-# Navegar al proyecto
+# 1. Navegar al proyecto
 cd sistema-financiero
 
-# Ejecutar servidor Python
-python3 -m http.server 8000
-
-# Abrir en navegador
-# http://localhost:8000/public/
-```
-
-### Opción 2: Con npm
-
-```bash
-# Instalar dependencias (opcional para desarrollo)
+# 2. Instalar dependencias
 npm install
 
-# Ejecutar servidor
-npm start
+# 3. Ejecutar servidor de desarrollo
+npm run dev
 
-# Abrir en navegador
-# http://localhost:3000
+# 4. Abrir en navegador
+# http://localhost:5173
 ```
+
+### Build para Producción
+
+```bash
+# Generar build optimizado
+npm run build
+
+# Previsualizar build de producción
+npm run preview
+```
+
+### Deploy en Vercel
+
+El proyecto está configurado para deployarse automáticamente en Vercel:
+
+1. Conecta tu repositorio a Vercel
+2. Vercel detectará automáticamente Vite
+3. El deploy se ejecutará con `npm run build`
+4. Los archivos de producción estarán en `/dist`
 
 ### PIN de Acceso
 

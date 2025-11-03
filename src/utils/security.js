@@ -3,7 +3,7 @@
  * Utiliza CryptoJS para encriptar/desencriptar datos sensibles
  */
 
-/* global CryptoJS */
+import CryptoJS from 'crypto-js';
 
 const Security = {
   /**
