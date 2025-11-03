@@ -16,7 +16,7 @@ const AuthScreen = ({ onAuth }) => {
       if (pin === MASTER_PIN) {
         let data;
         if (isSetup) {
-          data = { tarjetas: [], transacciones: [], recurrencias: [] };
+          data = { tarjetas: [], transacciones: [], recurrencias: [], metas: [] };
           Storage.saveData(data, MASTER_PIN);
         } else {
           data = Storage.loadData(MASTER_PIN);
@@ -26,6 +26,7 @@ const AuthScreen = ({ onAuth }) => {
             return;
           }
           if (!data.recurrencias) data.recurrencias = [];
+          if (!data.metas) data.metas = [];
         }
         onAuth(data);
       } else {

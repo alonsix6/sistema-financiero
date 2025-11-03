@@ -423,6 +423,140 @@ const Calculations = {
     });
 
     return transaccionesActualizadas;
+  },
+
+  /**
+   * Calcula el dinero disponible para ahorrar
+   * Considera: Efectivo disponible - Deudas de tarjetas pendientes
+   * @param {Array} transacciones - Lista de transacciones
+   * @param {Array} tarjetas - Lista de tarjetas
+   * @param {Array} metas - Lista de metas (para restar dinero ya asignado)
+   * @returns {number} Dinero disponible para ahorrar
+   */
+  calcularDisponibleParaAhorrar: (transacciones, tarjetas, metas = []) => {
+    const efectivoDisponible = Calculations.calcularEfectivoDisponible(transacciones);
+    const deudasTarjetas = tarjetas.reduce((sum, t) => sum + t.saldoActual, 0);
+    const dineroEnMetas = metas.reduce((sum, m) => sum + (m.montoAhorrado || 0), 0);
+
+    // Efectivo disponible - deudas de tarjetas - dinero ya asignado en metas
+    return efectivoDisponible - deudasTarjetas - dineroEnMetas;
+  },
+
+  /**
+   * Calcula el cashflow promedio mensual
+   * @param {Array} transacciones - Lista de transacciones
+   * @param {number} meses - Número de meses a considerar (por defecto 3)
+   * @returns {Object} Cashflow promedio con ingresos, gastos y neto
+   */
+  calcularCashflowPromedio: (transacciones, meses = 3) => {
+    const hoy = new Date();
+    const fechaInicio = new Date(hoy.getFullYear(), hoy.getMonth() - meses, hoy.getDate());
+
+    const transaccionesFiltradas = transacciones.filter(t => {
+      const fecha = new Date(t.fecha + 'T12:00:00');
+      return fecha >= fechaInicio;
+    });
+
+    const ingresosMensuales = transaccionesFiltradas
+      .filter(t => t.tipo === 'Ingreso')
+      .reduce((sum, t) => sum + t.monto, 0) / meses;
+
+    const gastosMensuales = transaccionesFiltradas
+      .filter(t => t.tipo === 'Gasto')
+      .reduce((sum, t) => sum + t.monto, 0) / meses;
+
+    return {
+      ingresosMensuales,
+      gastosMensuales,
+      cashflowNeto: ingresosMensuales - gastosMensuales
+    };
+  },
+
+  /**
+   * Calcula cuánto tiempo tomará alcanzar una meta
+   * @param {number} montoObjetivo - Monto objetivo de la meta
+   * @param {number} montoActual - Monto ya ahorrado
+   * @param {number} cashflowMensual - Cashflow mensual promedio
+   * @param {number} porcentajeAhorro - % del cashflow a destinar (0-100)
+   * @returns {Object} Información del tiempo estimado
+   */
+  calcularTiempoParaMeta: (montoObjetivo, montoActual, cashflowMensual, porcentajeAhorro = 100) => {
+    const montoPendiente = montoObjetivo - montoActual;
+    if (montoPendiente <= 0) {
+      return {
+        alcanzada: true,
+        meses: 0,
+        aporteMensual: 0,
+        fechaEstimada: new Date()
+      };
+    }
+
+    if (cashflowMensual <= 0) {
+      return {
+        alcanzada: false,
+        meses: Infinity,
+        aporteMensual: 0,
+        fechaEstimada: null,
+        mensaje: 'No hay cashflow positivo para ahorrar'
+      };
+    }
+
+    const aporteMensual = (cashflowMensual * porcentajeAhorro) / 100;
+    const meses = Math.ceil(montoPendiente / aporteMensual);
+
+    const fechaEstimada = new Date();
+    fechaEstimada.setMonth(fechaEstimada.getMonth() + meses);
+
+    return {
+      alcanzada: false,
+      meses,
+      aporteMensual,
+      fechaEstimada,
+      anios: Math.floor(meses / 12),
+      mesesRestantes: meses % 12
+    };
+  },
+
+  /**
+   * Calcula el progreso de una meta
+   * @param {Object} meta - Objeto de meta
+   * @returns {Object} Información del progreso
+   */
+  calcularProgresoMeta: (meta) => {
+    const porcentaje = meta.montoObjetivo > 0
+      ? Math.min((meta.montoAhorrado / meta.montoObjetivo) * 100, 100)
+      : 0;
+
+    const montoPendiente = Math.max(meta.montoObjetivo - meta.montoAhorrado, 0);
+    const alcanzada = meta.montoAhorrado >= meta.montoObjetivo;
+
+    // Calcular días desde inicio
+    let diasDesdeInicio = 0;
+    let diasParaObjetivo = null;
+
+    if (meta.fechaInicio) {
+      const inicio = new Date(meta.fechaInicio + 'T00:00:00');
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      diasDesdeInicio = Math.floor((hoy - inicio) / (1000 * 60 * 60 * 24));
+    }
+
+    if (meta.fechaObjetivo) {
+      const objetivo = new Date(meta.fechaObjetivo + 'T00:00:00');
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      diasParaObjetivo = Math.floor((objetivo - hoy) / (1000 * 60 * 60 * 24));
+    }
+
+    return {
+      porcentaje: porcentaje.toFixed(1),
+      montoPendiente,
+      alcanzada,
+      diasDesdeInicio,
+      diasParaObjetivo,
+      atrasada: diasParaObjetivo !== null && diasParaObjetivo < 0 && !alcanzada,
+      enRiesgo: diasParaObjetivo !== null && diasParaObjetivo > 0 && diasParaObjetivo < 30 && porcentaje < 80
+    };
   }
 };
 

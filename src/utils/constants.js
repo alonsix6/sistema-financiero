@@ -27,3 +27,14 @@ export const BANCOS = [
   { nombre: 'Scotiabank', color: 'from-red-600 to-red-700' },
   { nombre: 'iO', color: 'from-purple-700 to-purple-900' }
 ];
+
+export const CATEGORIAS_METAS = [
+  { valor: 'Emergencias', icono: '🚨', color: 'from-red-500 to-red-600' },
+  { valor: 'Vacaciones', icono: '✈️', color: 'from-blue-500 to-blue-600' },
+  { valor: 'Compra Grande', icono: '🛒', color: 'from-purple-500 to-purple-600' },
+  { valor: 'Auto', icono: '🚗', color: 'from-gray-600 to-gray-700' },
+  { valor: 'Casa', icono: '🏠', color: 'from-green-500 to-green-600' },
+  { valor: 'Educación', icono: '📚', color: 'from-indigo-500 to-indigo-600' },
+  { valor: 'Inversión', icono: '📈', color: 'from-teal-500 to-teal-600' },
+  { valor: 'Otros', icono: '🎯', color: 'from-orange-500 to-orange-600' }
+];

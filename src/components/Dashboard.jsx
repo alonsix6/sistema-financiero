@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { CATEGORIAS, TIPOS_INGRESO, BANCOS } from '../utils/constants.js';
+import { CATEGORIAS, TIPOS_INGRESO, BANCOS, CATEGORIAS_METAS } from '../utils/constants.js';
 import Calculations from '../utils/calculations.js';
 import Modal from './Modal.jsx';
 import GraficoCategorias from './GraficoCategorias.jsx';
@@ -14,6 +14,8 @@ import FormularioRecurrencia from './forms/FormularioRecurrencia.jsx';
 import FormularioPagoTarjeta from './forms/FormularioPagoTarjeta.jsx';
 import FormularioPagoAdelantado from './forms/FormularioPagoAdelantado.jsx';
 import SimuladorMovimiento from './forms/SimuladorMovimiento.jsx';
+import FormularioMeta from './forms/FormularioMeta.jsx';
+import FormularioAporteMeta from './forms/FormularioAporteMeta.jsx';
 
 const Dashboard = ({ userData, onUpdateData }) => {
   // Estados UI
@@ -27,6 +29,8 @@ const Dashboard = ({ userData, onUpdateData }) => {
   const [modalSimulador, setModalSimulador] = useState(false);
   const [modalPagoTarjeta, setModalPagoTarjeta] = useState(false);
   const [modalPagoAdelantado, setModalPagoAdelantado] = useState(false);
+  const [modalMeta, setModalMeta] = useState(false);
+  const [modalAporteMeta, setModalAporteMeta] = useState(false);
 
   // Estados de Formularios
   const [tipoTransaccion, setTipoTransaccion] = useState('Gasto');
@@ -37,6 +41,8 @@ const Dashboard = ({ userData, onUpdateData }) => {
   const [recurrenciaEditar, setRecurrenciaEditar] = useState(null);
   const [simulacionActual, setSimulacionActual] = useState(null);
   const [proyeccionSimulada, setProyeccionSimulada] = useState(null);
+  const [metaEditar, setMetaEditar] = useState(null);
+  const [metaAportar, setMetaAportar] = useState(null);
 
   // Filtros de fecha
   const hoy = new Date();
@@ -91,6 +97,14 @@ const Dashboard = ({ userData, onUpdateData }) => {
   const proyeccion = useMemo(() =>
     Calculations.calcularProyeccion(userData.tarjetas, userData.transacciones, userData.recurrencias || [], 6),
     [userData.tarjetas, userData.transacciones, userData.recurrencias]
+  );
+  const disponibleParaAhorrar = useMemo(() =>
+    Calculations.calcularDisponibleParaAhorrar(userData.transacciones, userData.tarjetas, userData.metas || []),
+    [userData.transacciones, userData.tarjetas, userData.metas]
+  );
+  const cashflowPromedio = useMemo(() =>
+    Calculations.calcularCashflowPromedio(userData.transacciones, 3),
+    [userData.transacciones]
   );
 
   // Handlers de Tarjetas
@@ -292,6 +306,55 @@ const Dashboard = ({ userData, onUpdateData }) => {
     alert(`✅ Pago adelantado registrado correctamente\n\n💳 ${cuotasAPagar} cuota(s) pagadas\n💰 S/ ${montoTotal.toFixed(2)} liberados de tu tarjeta`);
   };
 
+  // Handlers de Metas
+  const handleSaveMeta = (meta) => {
+    let nuevasMetas;
+    if (metaEditar) {
+      nuevasMetas = (userData.metas || []).map(m => m.id === meta.id ? meta : m);
+    } else {
+      nuevasMetas = [...(userData.metas || []), meta];
+    }
+    onUpdateData({ ...userData, metas: nuevasMetas });
+    setModalMeta(false);
+    setMetaEditar(null);
+  };
+
+  const handleDeleteMeta = (id) => {
+    const meta = (userData.metas || []).find(m => m.id === id);
+    if (meta && meta.montoAhorrado > 0) {
+      alert(`⚠️ Esta meta tiene S/ ${meta.montoAhorrado.toFixed(2)} ahorrados. Al eliminarla, este dinero volverá a tu efectivo disponible.`);
+    }
+    const nuevasMetas = (userData.metas || []).filter(m => m.id !== id);
+    onUpdateData({ ...userData, metas: nuevasMetas });
+    setModalMeta(false);
+    setMetaEditar(null);
+  };
+
+  const handleAportarMeta = (monto) => {
+    if (!metaAportar) return;
+
+    const metasActualizadas = (userData.metas || []).map(m => {
+      if (m.id === metaAportar.id) {
+        return { ...m, montoAhorrado: Math.max(0, m.montoAhorrado + monto) };
+      }
+      return m;
+    });
+
+    onUpdateData({ ...userData, metas: metasActualizadas });
+    setModalAporteMeta(false);
+    setMetaAportar(null);
+
+    const tipoOperacion = monto > 0 ? 'Aporte' : 'Retiro';
+    const metaActualizada = metasActualizadas.find(m => m.id === metaAportar.id);
+    const progreso = Calculations.calcularProgresoMeta(metaActualizada);
+
+    if (progreso.alcanzada && monto > 0) {
+      alert(`🎉 ¡Felicidades! Has completado tu meta "${metaAportar.nombre}"\n\n💰 Ahorrado: S/ ${metaActualizada.montoAhorrado.toFixed(2)}`);
+    } else {
+      alert(`✅ ${tipoOperacion} registrado correctamente\n\n💰 Nuevo saldo en "${metaAportar.nombre}": S/ ${metaActualizada.montoAhorrado.toFixed(2)}\n📊 Progreso: ${progreso.porcentaje}%`);
+    }
+  };
+
   // Clases de estilo condicionales
   const bgClass = darkMode ? 'bg-gray-900' : 'bg-gray-50';
   const cardClass = darkMode ? 'bg-gray-800' : 'bg-white';
@@ -334,7 +397,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
       {/* Navigation Tabs */}
       <div className={`${cardClass} border-b sticky top-16 z-30 transition-colors`}>
         <div className="max-w-7xl mx-auto px-4 flex gap-1 overflow-x-auto">
-          {['inicio', 'tarjetas', 'transacciones', 'proyección', 'recurrencias'].map(tab => (
+          {['inicio', 'tarjetas', 'transacciones', 'metas', 'proyección', 'recurrencias'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -880,6 +943,249 @@ const Dashboard = ({ userData, onUpdateData }) => {
           </div>
         )}
 
+        {/* Vista Metas */}
+        {activeTab === 'metas' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className={`text-2xl font-bold ${textClass}`}>🎯 Metas de Ahorro</h2>
+              <button
+                onClick={() => {
+                  setMetaEditar(null);
+                  setModalMeta(true);
+                }}
+                className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600"
+              >
+                Nueva Meta
+              </button>
+            </div>
+
+            {/* Panel de Información de Ahorro */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-6 text-white">
+                <p className="text-sm opacity-80 mb-1">💰 Disponible para Ahorrar</p>
+                <p className="text-3xl font-bold mb-2">S/ {disponibleParaAhorrar.toFixed(2)}</p>
+                <p className="text-xs opacity-80">
+                  Efectivo - Deudas - Dinero en metas
+                </p>
+              </div>
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
+                <p className="text-sm opacity-80 mb-1">📊 Cashflow Promedio (3 meses)</p>
+                <p className="text-3xl font-bold mb-2">S/ {cashflowPromedio.cashflowNeto.toFixed(2)}</p>
+                <p className="text-xs opacity-80">
+                  {cashflowPromedio.cashflowNeto > 0 ? 'Capacidad de ahorro mensual' : 'Necesitas aumentar ingresos'}
+                </p>
+              </div>
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white">
+                <p className="text-sm opacity-80 mb-1">🎯 Total en Metas</p>
+                <p className="text-3xl font-bold mb-2">
+                  S/ {(userData.metas || []).reduce((sum, m) => sum + (m.montoAhorrado || 0), 0).toFixed(2)}
+                </p>
+                <p className="text-xs opacity-80">
+                  Dinero asignado a {(userData.metas || []).length} meta(s)
+                </p>
+              </div>
+            </div>
+
+            {/* Explicación */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <p className="text-sm text-blue-800">
+                💡 <strong>¿Cómo funciona?</strong> El "Disponible para Ahorrar" considera tu efectivo actual menos las deudas de tarjetas y el dinero ya asignado en otras metas. Esto te muestra cuánto dinero real puedes destinar a nuevas metas sin comprometer tus obligaciones.
+              </p>
+            </div>
+
+            {/* Lista de Metas */}
+            {(!userData.metas || userData.metas.length === 0) ? (
+              <div className={`${cardClass} rounded-2xl shadow-lg p-12 text-center`}>
+                <span className="text-6xl block mb-4">🎯</span>
+                <h3 className={`text-xl font-bold mb-2 ${textClass}`}>No tienes metas de ahorro</h3>
+                <p className={`mb-6 ${textSecondaryClass}`}>
+                  Crea tu primera meta y comienza a ahorrar de forma inteligente
+                </p>
+                <button
+                  onClick={() => setModalMeta(true)}
+                  className="px-8 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600"
+                >
+                  Crear Primera Meta
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {(userData.metas || [])
+                  .filter(m => m.activa)
+                  .map(meta => {
+                    const categoria = CATEGORIAS_METAS.find(c => c.valor === meta.categoria) || CATEGORIAS_METAS[0];
+                    const progreso = Calculations.calcularProgresoMeta(meta);
+                    const tiempoEstimado = Calculations.calcularTiempoParaMeta(
+                      meta.montoObjetivo,
+                      meta.montoAhorrado,
+                      cashflowPromedio.cashflowNeto,
+                      100
+                    );
+
+                    return (
+                      <div
+                        key={meta.id}
+                        className={`bg-gradient-to-br ${categoria.color} rounded-2xl shadow-xl p-6 text-white relative overflow-hidden`}
+                      >
+                        {/* Indicador de Meta Alcanzada */}
+                        {progreso.alcanzada && (
+                          <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold">
+                            ✅ Completada
+                          </div>
+                        )}
+
+                        {/* Indicador de Atraso */}
+                        {progreso.atrasada && (
+                          <div className="absolute top-4 right-4 bg-red-500/90 px-3 py-1 rounded-full text-xs font-bold">
+                            ⚠️ Atrasada
+                          </div>
+                        )}
+
+                        {/* Encabezado */}
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className="text-4xl">{categoria.icono}</span>
+                          <div className="flex-1">
+                            <h3 className="text-xl font-bold">{meta.nombre}</h3>
+                            <p className="text-sm opacity-80">{meta.categoria}</p>
+                          </div>
+                        </div>
+
+                        {/* Información de Montos */}
+                        <div className="space-y-3 mb-4">
+                          <div className="flex justify-between text-sm">
+                            <span className="opacity-80">Ahorrado:</span>
+                            <span className="font-bold">S/ {meta.montoAhorrado.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="opacity-80">Objetivo:</span>
+                            <span className="font-bold">S/ {meta.montoObjetivo.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="opacity-80">Falta:</span>
+                            <span className="font-semibold">S/ {progreso.montoPendiente.toFixed(2)}</span>
+                          </div>
+
+                          {/* Barra de Progreso */}
+                          <div className="pt-2">
+                            <div className="flex justify-between text-xs mb-2">
+                              <span className="opacity-80">Progreso</span>
+                              <span className="font-bold">{progreso.porcentaje}%</span>
+                            </div>
+                            <div className="w-full bg-white/20 rounded-full h-3">
+                              <div
+                                className="bg-white h-3 rounded-full transition-all"
+                                style={{ width: `${Math.min(progreso.porcentaje, 100)}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Información de Tiempo */}
+                        <div className="pt-3 border-t border-white/20 mb-4">
+                          {meta.fechaObjetivo && (
+                            <div className="flex justify-between text-sm mb-2">
+                              <span className="opacity-80">Fecha objetivo:</span>
+                              <span className="font-semibold">
+                                {new Date(meta.fechaObjetivo + 'T00:00:00').toLocaleDateString('es-PE', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                          )}
+                          {meta.fechaObjetivo && progreso.diasParaObjetivo !== null && (
+                            <div className="flex justify-between text-sm">
+                              <span className="opacity-80">
+                                {progreso.diasParaObjetivo >= 0 ? 'Días restantes:' : 'Días atrasada:'}
+                              </span>
+                              <span className={`font-semibold ${progreso.diasParaObjetivo < 0 ? 'text-red-200' : ''}`}>
+                                {Math.abs(progreso.diasParaObjetivo)} días
+                              </span>
+                            </div>
+                          )}
+                          {!progreso.alcanzada && tiempoEstimado && !tiempoEstimado.alcanzada && tiempoEstimado.meses !== Infinity && (
+                            <div className="mt-2 p-2 bg-white/10 rounded-lg">
+                              <p className="text-xs opacity-90">
+                                📅 Con tu cashflow actual: <strong>{tiempoEstimado.meses} mes(es)</strong>
+                                {tiempoEstimado.anios > 0 && ` (${tiempoEstimado.anios} año(s), ${tiempoEstimado.mesesRestantes} mes(es))`}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Botones de Acción */}
+                        <div className="grid grid-cols-3 gap-2">
+                          <button
+                            onClick={() => {
+                              setMetaAportar(meta);
+                              setModalAporteMeta(true);
+                            }}
+                            className="bg-white/20 hover:bg-white/30 py-2.5 rounded-lg text-sm font-semibold"
+                          >
+                            💰 Aportar
+                          </button>
+                          <button
+                            onClick={() => {
+                              setMetaAportar(meta);
+                              setModalAporteMeta(true);
+                            }}
+                            className="bg-white/20 hover:bg-white/30 py-2.5 rounded-lg text-sm font-semibold"
+                            disabled={meta.montoAhorrado === 0}
+                          >
+                            💸 Retirar
+                          </button>
+                          <button
+                            onClick={() => {
+                              setMetaEditar(meta);
+                              setModalMeta(true);
+                            }}
+                            className="bg-white/20 hover:bg-white/30 py-2.5 rounded-lg text-sm font-semibold"
+                          >
+                            ✏️ Editar
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
+            {/* Metas Inactivas */}
+            {(userData.metas || []).filter(m => !m.activa).length > 0 && (
+              <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
+                <h3 className={`text-lg font-bold mb-4 ${textClass}`}>📦 Metas Inactivas</h3>
+                <div className="space-y-3">
+                  {(userData.metas || [])
+                    .filter(m => !m.activa)
+                    .map(meta => (
+                      <div
+                        key={meta.id}
+                        className="flex justify-between items-center p-4 bg-gray-50 rounded-xl"
+                      >
+                        <div>
+                          <p className="font-semibold text-gray-800">{meta.nombre}</p>
+                          <p className="text-sm text-gray-600">
+                            S/ {meta.montoAhorrado.toFixed(2)} / S/ {meta.montoObjetivo.toFixed(2)}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setMetaEditar(meta);
+                            setModalMeta(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          Editar
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Vista Recurrencias */}
         {activeTab === 'recurrencias' && (
           <div className="space-y-6">
@@ -1005,6 +1311,14 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
       <Modal isOpen={modalPagoAdelantado} onClose={() => { setModalPagoAdelantado(false); setTransaccionPagarAdelantado(null); }} title="💳 Pago Adelantado de Cuotas">
         {transaccionPagarAdelantado && <FormularioPagoAdelantado transaccion={transaccionPagarAdelantado} efectivoDisponible={efectivoDisponible} onPagar={handlePagarCuotasAdelantadas} onClose={() => { setModalPagoAdelantado(false); setTransaccionPagarAdelantado(null); }} />}
+      </Modal>
+
+      <Modal isOpen={modalMeta} onClose={() => { setModalMeta(false); setMetaEditar(null); }} title={metaEditar ? 'Editar Meta' : 'Nueva Meta de Ahorro'}>
+        <FormularioMeta meta={metaEditar} onSave={handleSaveMeta} onDelete={handleDeleteMeta} onClose={() => { setModalMeta(false); setMetaEditar(null); }} />
+      </Modal>
+
+      <Modal isOpen={modalAporteMeta} onClose={() => { setModalAporteMeta(false); setMetaAportar(null); }} title={`💰 ${metaAportar?.nombre || 'Meta de Ahorro'}`}>
+        {metaAportar && <FormularioAporteMeta meta={metaAportar} disponibleParaAhorrar={disponibleParaAhorrar} onAportar={handleAportarMeta} onClose={() => { setModalAporteMeta(false); setMetaAportar(null); }} />}
       </Modal>
 
       {/* Botones Flotantes Móviles */}
