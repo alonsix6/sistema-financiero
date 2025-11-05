@@ -1,49 +1,21 @@
 /**
  * Formulario para agregar/editar inversiones en stocks y ETFs
- * Soporta inversiones fraccionarias y tipo de cambio USD/PEN
+ * Soporta inversiones fraccionarias en USD
  */
 
-import React, { useState, useEffect } from 'react';
-import FinnhubService from '../../utils/finnhubService.js';
+import React, { useState } from 'react';
 
-const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice, exchangeRate, onSave, onClose }) => {
+const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice, onSave, onClose }) => {
   const [inputMode, setInputMode] = useState('amount'); // 'amount' o 'shares'
   const [formData, setFormData] = useState({
     shares: investment?.shares || '',
     investmentAmountUSD: investment?.shares && investment?.purchasePrice ? (investment.shares * investment.purchasePrice).toFixed(2) : '',
     purchasePrice: investment?.purchasePrice || currentPrice || '',
     purchaseDate: investment?.purchaseDate || new Date().toISOString().split('T')[0],
-    exchangeRate: investment?.exchangeRate || exchangeRate || '',
     notes: investment?.notes || '',
   });
 
   const [errors, setErrors] = useState({});
-  const [loadingExchangeRate, setLoadingExchangeRate] = useState(false);
-
-  // Cargar tipo de cambio al montar si no existe
-  useEffect(() => {
-    if (!formData.exchangeRate) {
-      loadExchangeRate();
-    }
-  }, []);
-
-  const loadExchangeRate = async () => {
-    setLoadingExchangeRate(true);
-    try {
-      const rate = await FinnhubService.getExchangeRate('USD', 'PEN');
-      if (rate) {
-        setFormData(prev => ({ ...prev, exchangeRate: rate.toFixed(4) }));
-      } else {
-        // Fallback a tipo de cambio aproximado
-        setFormData(prev => ({ ...prev, exchangeRate: '3.75' }));
-      }
-    } catch (error) {
-      console.error('Error cargando tipo de cambio:', error);
-      setFormData(prev => ({ ...prev, exchangeRate: '3.75' }));
-    } finally {
-      setLoadingExchangeRate(false);
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -106,10 +78,6 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
       newErrors.purchasePrice = 'Debes ingresar un precio de compra válido';
     }
 
-    if (!formData.exchangeRate || parseFloat(formData.exchangeRate) <= 0) {
-      newErrors.exchangeRate = 'Debes ingresar un tipo de cambio válido';
-    }
-
     if (!formData.purchaseDate) {
       newErrors.purchaseDate = 'Debes seleccionar una fecha';
     }
@@ -125,9 +93,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
 
     const shares = parseFloat(formData.shares);
     const purchasePrice = parseFloat(formData.purchasePrice);
-    const exchangeRate = parseFloat(formData.exchangeRate);
     const totalInvestedUSD = shares * purchasePrice;
-    const totalInvestedPEN = totalInvestedUSD * exchangeRate;
 
     const investmentData = {
       id: investment?.id || Date.now(),
@@ -136,9 +102,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
       shares,
       purchasePrice,
       purchaseDate: formData.purchaseDate,
-      exchangeRate,
       totalInvested: totalInvestedUSD,
-      totalInvestedPEN,
       notes: formData.notes,
       createdAt: investment?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -148,7 +112,6 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
   };
 
   const totalInvestedUSD = (parseFloat(formData.shares) || 0) * (parseFloat(formData.purchasePrice) || 0);
-  const totalInvestedPEN = totalInvestedUSD * (parseFloat(formData.exchangeRate) || 0);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -284,45 +247,6 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
         </div>
       )}
 
-      {/* Tipo de cambio */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Tipo de Cambio USD/PEN
-        </label>
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <span className="absolute left-4 top-3 text-gray-500">S/</span>
-            <input
-              type="number"
-              name="exchangeRate"
-              value={formData.exchangeRate}
-              onChange={handleChange}
-              step="0.0001"
-              min="0.0001"
-              placeholder="Ej: 3.75"
-              className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 ${
-                errors.exchangeRate ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-          </div>
-          <button
-            type="button"
-            onClick={loadExchangeRate}
-            disabled={loadingExchangeRate}
-            className="px-4 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            title="Actualizar tipo de cambio"
-          >
-            {loadingExchangeRate ? '⏳' : '🔄'}
-          </button>
-        </div>
-        {errors.exchangeRate && (
-          <p className="text-red-600 text-sm mt-1">{errors.exchangeRate}</p>
-        )}
-        <p className="text-xs text-gray-500 mt-1">
-          💡 1 USD = S/ {formData.exchangeRate || '0'} PEN
-        </p>
-      </div>
-
       {/* Fecha de compra */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -360,28 +284,12 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
 
       {/* Resumen de inversión */}
       {totalInvestedUSD > 0 && (
-        <div className="space-y-3">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
-            <p className="text-sm opacity-90 mb-1">Inversión en Dólares</p>
-            <p className="text-3xl font-bold">${totalInvestedUSD.toFixed(2)} USD</p>
-            <p className="text-xs opacity-80 mt-2">
-              {parseFloat(formData.shares).toFixed(6)} acciones × ${formData.purchasePrice} por acción
-            </p>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white">
-            <p className="text-sm opacity-90 mb-1">Inversión en Soles</p>
-            <p className="text-3xl font-bold">S/ {totalInvestedPEN.toFixed(2)} PEN</p>
-            <p className="text-xs opacity-80 mt-2">
-              ${totalInvestedUSD.toFixed(2)} × S/ {formData.exchangeRate} tipo de cambio
-            </p>
-          </div>
-
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-            <p className="text-xs text-yellow-800">
-              💰 <strong>Esta cantidad se deducirá de tu efectivo disponible</strong> (S/ {totalInvestedPEN.toFixed(2)})
-            </p>
-          </div>
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+          <p className="text-sm opacity-90 mb-1">Total a Invertir</p>
+          <p className="text-3xl font-bold">${totalInvestedUSD.toFixed(2)} USD</p>
+          <p className="text-xs opacity-80 mt-2">
+            {parseFloat(formData.shares).toFixed(6)} acciones × ${formData.purchasePrice} por acción
+          </p>
         </div>
       )}
 

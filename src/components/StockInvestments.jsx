@@ -39,34 +39,12 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
   const [modalInvestment, setModalInvestment] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [investmentToEdit, setInvestmentToEdit] = useState(null);
-  const [exchangeRate, setExchangeRate] = useState(null);
-  const [loadingExchangeRate, setLoadingExchangeRate] = useState(false);
   const updateIntervalRef = useRef(null);
 
   // Clases de estilo
   const textClass = darkMode ? 'text-white' : 'text-gray-800';
   const textSecondaryClass = darkMode ? 'text-gray-400' : 'text-gray-600';
   const cardClass = darkMode ? 'bg-gray-800' : 'bg-white';
-
-  /**
-   * Carga el tipo de cambio USD/PEN
-   */
-  const loadExchangeRate = async () => {
-    setLoadingExchangeRate(true);
-    try {
-      const rate = await FinnhubService.getExchangeRate('USD', 'PEN');
-      if (rate) {
-        setExchangeRate(rate);
-      } else {
-        setExchangeRate(3.75); // Fallback
-      }
-    } catch (error) {
-      console.error('Error cargando tipo de cambio:', error);
-      setExchangeRate(3.75); // Fallback
-    } finally {
-      setLoadingExchangeRate(false);
-    }
-  };
 
   /**
    * Obtiene datos de un símbolo
@@ -309,9 +287,9 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
     } else {
       updatedInvestments = [...investments, investmentData];
 
-      // Deducir del efectivo disponible si es una nueva inversión
-      if (onDeductFromCash && investmentData.totalInvestedPEN) {
-        onDeductFromCash(investmentData.totalInvestedPEN, investmentData.symbol, investmentData.name);
+      // Deducir del efectivo disponible si es una nueva inversión (en USD)
+      if (onDeductFromCash && investmentData.totalInvested) {
+        onDeductFromCash(investmentData.totalInvested, investmentData.symbol, investmentData.name);
       }
     }
 
@@ -329,13 +307,6 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
     const updatedInvestments = investments.filter(inv => inv.id !== investmentId);
     onUpdateInvestments(updatedInvestments);
   };
-
-  /**
-   * Efecto para cargar tipo de cambio al inicio
-   */
-  useEffect(() => {
-    loadExchangeRate();
-  }, []);
 
   /**
    * Efecto para actualizaciones en tiempo real
@@ -610,29 +581,9 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
     <div className="space-y-6">
       {/* Header con Toggle */}
       <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h2 className={`text-2xl font-bold ${textClass}`}>📊 Inversiones en Bolsa</h2>
-              {exchangeRate && (
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs ${textSecondaryClass} opacity-60`}>|</span>
-                  <button
-                    onClick={loadExchangeRate}
-                    disabled={loadingExchangeRate}
-                    className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors ${
-                      darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                    } disabled:opacity-50`}
-                    title="Actualizar tipo de cambio"
-                  >
-                    <span className="text-xs">💱</span>
-                    <span className={`text-xs font-medium ${textSecondaryClass}`}>
-                      {loadingExchangeRate ? '...' : `S/ ${exchangeRate.toFixed(4)}`}
-                    </span>
-                  </button>
-                </div>
-              )}
-            </div>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h2 className={`text-2xl font-bold ${textClass} mb-2`}>📊 Inversiones en Bolsa</h2>
             <p className={`text-sm ${textSecondaryClass}`}>
               Monitorea tus inversiones con análisis en tiempo real
             </p>
@@ -770,7 +721,6 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
               stockSymbol={selectedStock.symbol}
               stockName={selectedStock.name}
               currentPrice={selectedStock.currentPrice}
-              exchangeRate={exchangeRate}
               onSave={handleSaveInvestment}
               onClose={() => { setModalInvestment(false); setSelectedStock(null); setInvestmentToEdit(null); }}
             />

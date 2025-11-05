@@ -143,34 +143,19 @@ class FinnhubService {
   }
 
   /**
-   * Obtiene tasas de cambio forex
+   * Obtiene datos históricos de velas (candles) para gráficos
+   * @param {string} symbol - Símbolo del stock (ej: AAPL)
+   * @param {string} resolution - Resolución (1, 5, 15, 30, 60, D, W, M)
+   * @param {number} from - Unix timestamp de inicio
+   * @param {number} to - Unix timestamp de fin
    */
-  async getForexRates(base = 'USD') {
-    return this.enqueueCall(() => this.fetchAPI('/forex/rates', { base }));
-  }
-
-  /**
-   * Obtiene tipo de cambio específico (ej: USD a PEN)
-   * Usa endpoint alternativo ya que Finnhub forex rates puede no tener PEN
-   */
-  async getExchangeRate(from = 'USD', to = 'PEN') {
-    try {
-      // Intentar con forex quote directo
-      const symbol = `OANDA:${from}_${to}`;
-      const quote = await this.enqueueCall(() => this.fetchAPI('/quote', { symbol }));
-
-      if (quote && quote.c) {
-        return quote.c; // Precio actual (current price)
-      }
-
-      // Fallback: Tipo de cambio aproximado actual
-      // Podrías usar una API alternativa aquí
-      return 3.75; // Valor por defecto
-    } catch (error) {
-      console.error(`Error obteniendo tipo de cambio ${from}/${to}:`, error);
-      // Fallback a tipo de cambio aproximado
-      return 3.75;
-    }
+  async getStockCandles(symbol, resolution = 'D', from, to) {
+    return this.enqueueCall(() => this.fetchAPI('/stock/candle', {
+      symbol,
+      resolution,
+      from,
+      to
+    }));
   }
 
   /**
