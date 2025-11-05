@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import FinnhubService from '../utils/finnhubService.js';
 import Modal from './Modal.jsx';
+import StockChart from './StockChart.jsx';
 
 const FormularioInversion = lazy(() => import('./forms/FormularioInversion.jsx'));
 
@@ -39,6 +40,11 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
   const [modalInvestment, setModalInvestment] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [investmentToEdit, setInvestmentToEdit] = useState(null);
+  const [modalDetail, setModalDetail] = useState(false);
+  const [detailStock, setDetailStock] = useState(null);
+  const [chartData, setChartData] = useState(null);
+  const [chartPeriod, setChartPeriod] = useState('1M');
+  const [loadingChart, setLoadingChart] = useState(false);
   const updateIntervalRef = useRef(null);
 
   // Clases de estilo
