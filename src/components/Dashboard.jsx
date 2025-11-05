@@ -260,6 +260,11 @@ const Dashboard = ({ userData, onUpdateData }) => {
     onUpdateData({ ...userData, stockFavorites: newFavorites });
   };
 
+  // Handler de Inversiones en Bolsa
+  const handleUpdateInvestments = (newInvestments) => {
+    onUpdateData({ ...userData, stockInvestments: newInvestments });
+  };
+
   // Handler de Pago Adelantado de Cuotas
   const handlePagarCuotasAdelantadas = (cuotasAPagar, montoTotal) => {
     if (!transaccionPagarAdelantado) return;
@@ -1001,7 +1006,9 @@ const Dashboard = ({ userData, onUpdateData }) => {
             <StockInvestments
               darkMode={darkMode}
               favorites={userData.stockFavorites || []}
+              investments={userData.stockInvestments || []}
               onUpdateFavorites={handleUpdateFavorites}
+              onUpdateInvestments={handleUpdateInvestments}
             />
           </Suspense>
         )}
