@@ -143,6 +143,29 @@ class FinnhubService {
   }
 
   /**
+   * Obtiene tasas de cambio forex
+   */
+  async getForexRates(base = 'USD') {
+    return this.enqueueCall(() => this.fetchAPI('/forex/rates', { base }));
+  }
+
+  /**
+   * Obtiene tipo de cambio específico (ej: USD a PEN)
+   */
+  async getExchangeRate(from = 'USD', to = 'PEN') {
+    try {
+      const rates = await this.getForexRates(from);
+      if (rates && rates.quote && rates.quote[to]) {
+        return rates.quote[to];
+      }
+      return null;
+    } catch (error) {
+      console.error(`Error obteniendo tipo de cambio ${from}/${to}:`, error);
+      return null;
+    }
+  }
+
+  /**
    * Obtiene datos completos de un símbolo (stock o ETF)
    */
   async getFullStockData(symbol, isETF = false) {
