@@ -18,6 +18,7 @@ const FormularioPagoAdelantado = lazy(() => import('./forms/FormularioPagoAdelan
 const SimuladorMovimiento = lazy(() => import('./forms/SimuladorMovimiento.jsx'));
 const FormularioMeta = lazy(() => import('./forms/FormularioMeta.jsx'));
 const FormularioAporteMeta = lazy(() => import('./forms/FormularioAporteMeta.jsx'));
+const StockInvestments = lazy(() => import('./StockInvestments.jsx'));
 
 // Componente de loading
 const LoadingSpinner = () => (
@@ -254,6 +255,11 @@ const Dashboard = ({ userData, onUpdateData }) => {
     setProyeccionSimulada(proyeccionConSimulacion);
   };
 
+  // Handler de Favoritos de Inversiones
+  const handleUpdateFavorites = (newFavorites) => {
+    onUpdateData({ ...userData, stockFavorites: newFavorites });
+  };
+
   // Handler de Pago Adelantado de Cuotas
   const handlePagarCuotasAdelantadas = (cuotasAPagar, montoTotal) => {
     if (!transaccionPagarAdelantado) return;
@@ -411,7 +417,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
       {/* Navigation Tabs */}
       <div className={`${cardClass} border-b sticky top-16 z-30 transition-colors`}>
         <div className="max-w-7xl mx-auto px-4 flex gap-1 overflow-x-auto">
-          {['inicio', 'tarjetas', 'transacciones', 'metas', 'proyección', 'recurrencias'].map(tab => (
+          {['inicio', 'tarjetas', 'transacciones', 'inversiones', 'metas', 'proyección', 'recurrencias'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -987,6 +993,17 @@ const Dashboard = ({ userData, onUpdateData }) => {
               </>
             )}
           </div>
+        )}
+
+        {/* Vista Inversiones */}
+        {activeTab === 'inversiones' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <StockInvestments
+              darkMode={darkMode}
+              favorites={userData.stockFavorites || []}
+              onUpdateFavorites={handleUpdateFavorites}
+            />
+          </Suspense>
         )}
 
         {/* Vista Proyección */}
