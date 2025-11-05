@@ -610,9 +610,29 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
     <div className="space-y-6">
       {/* Header con Toggle */}
       <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h2 className={`text-2xl font-bold ${textClass} mb-2`}>📊 Inversiones en Bolsa</h2>
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <h2 className={`text-2xl font-bold ${textClass}`}>📊 Inversiones en Bolsa</h2>
+              {exchangeRate && (
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs ${textSecondaryClass} opacity-60`}>|</span>
+                  <button
+                    onClick={loadExchangeRate}
+                    disabled={loadingExchangeRate}
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors ${
+                      darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                    } disabled:opacity-50`}
+                    title="Actualizar tipo de cambio"
+                  >
+                    <span className="text-xs">💱</span>
+                    <span className={`text-xs font-medium ${textSecondaryClass}`}>
+                      {loadingExchangeRate ? '...' : `S/ ${exchangeRate.toFixed(4)}`}
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
             <p className={`text-sm ${textSecondaryClass}`}>
               Monitorea tus inversiones con análisis en tiempo real
             </p>
@@ -757,35 +777,6 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
           )}
         </Suspense>
       </Modal>
-
-      {/* Widget flotante de tipo de cambio */}
-      {exchangeRate && (
-        <div className={`fixed bottom-6 left-6 ${cardClass} rounded-xl shadow-2xl p-4 border-2 border-blue-500 z-40`}>
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center">
-              💱
-            </div>
-            <div>
-              <p className={`text-xs ${textSecondaryClass} font-medium`}>Tipo de Cambio</p>
-              <p className={`text-lg font-bold ${textClass}`}>
-                1 USD = S/ {exchangeRate.toFixed(4)}
-              </p>
-            </div>
-            <button
-              onClick={loadExchangeRate}
-              disabled={loadingExchangeRate}
-              className="ml-2 p-2 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
-              title="Actualizar tipo de cambio"
-            >
-              {loadingExchangeRate ? (
-                <span className="text-sm">⏳</span>
-              ) : (
-                <span className="text-sm">🔄</span>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
