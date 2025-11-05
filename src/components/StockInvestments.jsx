@@ -100,6 +100,94 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
   };
 
   /**
+   * Obtiene el rango de fechas según el período seleccionado
+   */
+  const getDateRange = (period) => {
+    const now = Math.floor(Date.now() / 1000);
+    let from;
+    let resolution = 'D';
+
+    switch (period) {
+      case '1D':
+        from = now - (24 * 60 * 60);
+        resolution = '5';
+        break;
+      case '1W':
+        from = now - (7 * 24 * 60 * 60);
+        resolution = '30';
+        break;
+      case '1M':
+        from = now - (30 * 24 * 60 * 60);
+        resolution = 'D';
+        break;
+      case '3M':
+        from = now - (90 * 24 * 60 * 60);
+        resolution = 'D';
+        break;
+      case '6M':
+        from = now - (180 * 24 * 60 * 60);
+        resolution = 'D';
+        break;
+      case '1Y':
+        from = now - (365 * 24 * 60 * 60);
+        resolution = 'W';
+        break;
+      default:
+        from = now - (30 * 24 * 60 * 60);
+        resolution = 'D';
+    }
+
+    return { from, to: now, resolution };
+  };
+
+  /**
+   * Carga datos del gráfico para un símbolo
+   */
+  const loadChartData = async (symbol, period = '1M') => {
+    setLoadingChart(true);
+    try {
+      const { from, to, resolution } = getDateRange(period);
+      const data = await FinnhubService.getStockCandles(symbol, resolution, from, to);
+
+      if (data && data.s === 'ok') {
+        setChartData(data);
+      } else {
+        setChartData(null);
+        console.error('No chart data available');
+      }
+    } catch (error) {
+      console.error('Error loading chart data:', error);
+      setChartData(null);
+    } finally {
+      setLoadingChart(false);
+    }
+  };
+
+  /**
+   * Abre el modal de detalle con gráfico
+   */
+  const openDetailModal = async (symbol, name, type) => {
+    const data = stockData[symbol];
+    if (!data) {
+      await fetchStockData(symbol, type);
+    }
+
+    setDetailStock({ symbol, name, type });
+    setModalDetail(true);
+    loadChartData(symbol, chartPeriod);
+  };
+
+  /**
+   * Cambia el período del gráfico
+   */
+  const handlePeriodChange = (period) => {
+    setChartPeriod(period);
+    if (detailStock) {
+      loadChartData(detailStock.symbol, period);
+    }
+  };
+
+  /**
    * Calcula métricas de inversión
    */
   const calculateInvestmentMetrics = (symbol, currentPrice) => {
@@ -520,6 +608,15 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
                 </div>
               )}
 
+              {/* Botón para ver gráfico */}
+              <button
+                onClick={() => openDetailModal(symbol, profile?.name || name || symbol, type)}
+                className={`w-full py-3 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} ${textClass} rounded-xl font-medium mb-3 transition-colors flex items-center justify-center gap-2`}
+              >
+                <span>📊</span>
+                <span>Ver Gráfico</span>
+              </button>
+
               {/* Botón para agregar inversión */}
               <button
                 onClick={() => openInvestmentModal(symbol, profile?.name || name || symbol, type, currentPrice)}
@@ -732,6 +829,129 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
             />
           )}
         </Suspense>
+      </Modal>
+
+      {/* Modal de detalle con gráfico */}
+      <Modal
+        isOpen={modalDetail}
+        onClose={() => { setModalDetail(false); setDetailStock(null); setChartData(null); setChartPeriod('1M'); }}
+        title=""
+      >
+        {detailStock && (
+          <div className="space-y-6">
+            {/* Header del modal */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className={`text-2xl font-bold ${textClass}`}>{detailStock.symbol}</h2>
+                <span className={`text-sm px-3 py-1 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} ${textSecondaryClass}`}>
+                  {detailStock.type === 'etf' ? '📊 ETF' : '📈 Stock'}
+                </span>
+              </div>
+              <p className={`text-sm ${textSecondaryClass}`}>{detailStock.name}</p>
+            </div>
+
+            {/* Precio y cambio */}
+            {stockData[detailStock.symbol]?.quote && (
+              <div>
+                <div className="flex items-baseline gap-3 mb-2">
+                  <p className={`text-4xl font-bold ${textClass}`}>
+                    ${stockData[detailStock.symbol].quote.c.toFixed(2)}
+                  </p>
+                  <p className={`text-xl font-semibold ${
+                    stockData[detailStock.symbol].quote.d >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {stockData[detailStock.symbol].quote.d >= 0 ? '+' : ''}
+                    ${stockData[detailStock.symbol].quote.d.toFixed(2)} (
+                    {stockData[detailStock.symbol].quote.dp >= 0 ? '+' : ''}
+                    {stockData[detailStock.symbol].quote.dp.toFixed(2)}%)
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Selector de período */}
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {['1D', '1W', '1M', '3M', '6M', '1Y'].map((period) => (
+                <button
+                  key={period}
+                  onClick={() => handlePeriodChange(period)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                    chartPeriod === period
+                      ? 'bg-blue-500 text-white'
+                      : darkMode
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {period}
+                </button>
+              ))}
+            </div>
+
+            {/* Gráfico */}
+            <div className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50'} rounded-xl p-4`}>
+              {loadingChart ? (
+                <LoadingSpinner />
+              ) : chartData ? (
+                <StockChart
+                  data={chartData}
+                  darkMode={darkMode}
+                  symbol={detailStock.symbol}
+                />
+              ) : (
+                <div className="h-64 flex items-center justify-center">
+                  <p className={textSecondaryClass}>No hay datos disponibles para este período</p>
+                </div>
+              )}
+            </div>
+
+            {/* Métricas del stock */}
+            {stockData[detailStock.symbol]?.quote && (
+              <div className={`grid grid-cols-2 gap-4 p-4 rounded-xl ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                <div>
+                  <p className={`text-xs ${textSecondaryClass} mb-1`}>Apertura</p>
+                  <p className={`text-lg font-semibold ${textClass}`}>
+                    ${stockData[detailStock.symbol].quote.o?.toFixed(2) || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className={`text-xs ${textSecondaryClass} mb-1`}>Máximo del día</p>
+                  <p className={`text-lg font-semibold ${textClass}`}>
+                    ${stockData[detailStock.symbol].quote.h?.toFixed(2) || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className={`text-xs ${textSecondaryClass} mb-1`}>Mínimo del día</p>
+                  <p className={`text-lg font-semibold ${textClass}`}>
+                    ${stockData[detailStock.symbol].quote.l?.toFixed(2) || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className={`text-xs ${textSecondaryClass} mb-1`}>Cierre anterior</p>
+                  <p className={`text-lg font-semibold ${textClass}`}>
+                    ${stockData[detailStock.symbol].quote.pc?.toFixed(2) || 'N/A'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Botón de inversión */}
+            <button
+              onClick={() => {
+                setModalDetail(false);
+                openInvestmentModal(
+                  detailStock.symbol,
+                  detailStock.name,
+                  detailStock.type,
+                  stockData[detailStock.symbol]?.quote?.c
+                );
+              }}
+              className="w-full py-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-semibold text-lg"
+            >
+              💰 Registrar Inversión
+            </button>
+          </div>
+        )}
       </Modal>
     </div>
   );
