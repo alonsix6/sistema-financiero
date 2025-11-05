@@ -11,6 +11,7 @@ export const CATEGORIAS = [
   { valor: 'Hormiga', icono: '🐜', color: '#EF4444' },
   { valor: 'Gimnasio', icono: '💪', color: '#10B981' },
   { valor: 'Suscripciones', icono: '📱', color: '#6366F1' },
+  { valor: 'Inversiones', icono: '📊', color: '#14B8A6' },
   { valor: 'Otros', icono: '📦', color: '#6B7280' }
 ];
 

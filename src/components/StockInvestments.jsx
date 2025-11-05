@@ -29,7 +29,7 @@ const LoadingSpinner = () => (
   </div>
 );
 
-const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdateFavorites, onUpdateInvestments }) => {
+const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdateFavorites, onUpdateInvestments, onDeductFromCash }) => {
   const [liveUpdates, setLiveUpdates] = useState(false);
   const [stockData, setStockData] = useState({});
   const [loading, setLoading] = useState({});
@@ -39,12 +39,34 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
   const [modalInvestment, setModalInvestment] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [investmentToEdit, setInvestmentToEdit] = useState(null);
+  const [exchangeRate, setExchangeRate] = useState(null);
+  const [loadingExchangeRate, setLoadingExchangeRate] = useState(false);
   const updateIntervalRef = useRef(null);
 
   // Clases de estilo
   const textClass = darkMode ? 'text-white' : 'text-gray-800';
   const textSecondaryClass = darkMode ? 'text-gray-400' : 'text-gray-600';
   const cardClass = darkMode ? 'bg-gray-800' : 'bg-white';
+
+  /**
+   * Carga el tipo de cambio USD/PEN
+   */
+  const loadExchangeRate = async () => {
+    setLoadingExchangeRate(true);
+    try {
+      const rate = await FinnhubService.getExchangeRate('USD', 'PEN');
+      if (rate) {
+        setExchangeRate(rate);
+      } else {
+        setExchangeRate(3.75); // Fallback
+      }
+    } catch (error) {
+      console.error('Error cargando tipo de cambio:', error);
+      setExchangeRate(3.75); // Fallback
+    } finally {
+      setLoadingExchangeRate(false);
+    }
+  };
 
   /**
    * Obtiene datos de un símbolo
@@ -286,6 +308,11 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
       );
     } else {
       updatedInvestments = [...investments, investmentData];
+
+      // Deducir del efectivo disponible si es una nueva inversión
+      if (onDeductFromCash && investmentData.totalInvestedPEN) {
+        onDeductFromCash(investmentData.totalInvestedPEN, investmentData.symbol, investmentData.name);
+      }
     }
 
     onUpdateInvestments(updatedInvestments);
@@ -302,6 +329,13 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
     const updatedInvestments = investments.filter(inv => inv.id !== investmentId);
     onUpdateInvestments(updatedInvestments);
   };
+
+  /**
+   * Efecto para cargar tipo de cambio al inicio
+   */
+  useEffect(() => {
+    loadExchangeRate();
+  }, []);
 
   /**
    * Efecto para actualizaciones en tiempo real
@@ -716,12 +750,42 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
               stockSymbol={selectedStock.symbol}
               stockName={selectedStock.name}
               currentPrice={selectedStock.currentPrice}
+              exchangeRate={exchangeRate}
               onSave={handleSaveInvestment}
               onClose={() => { setModalInvestment(false); setSelectedStock(null); setInvestmentToEdit(null); }}
             />
           )}
         </Suspense>
       </Modal>
+
+      {/* Widget flotante de tipo de cambio */}
+      {exchangeRate && (
+        <div className={`fixed bottom-6 left-6 ${cardClass} rounded-xl shadow-2xl p-4 border-2 border-blue-500 z-40`}>
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center">
+              💱
+            </div>
+            <div>
+              <p className={`text-xs ${textSecondaryClass} font-medium`}>Tipo de Cambio</p>
+              <p className={`text-lg font-bold ${textClass}`}>
+                1 USD = S/ {exchangeRate.toFixed(4)}
+              </p>
+            </div>
+            <button
+              onClick={loadExchangeRate}
+              disabled={loadingExchangeRate}
+              className="ml-2 p-2 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+              title="Actualizar tipo de cambio"
+            >
+              {loadingExchangeRate ? (
+                <span className="text-sm">⏳</span>
+              ) : (
+                <span className="text-sm">🔄</span>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

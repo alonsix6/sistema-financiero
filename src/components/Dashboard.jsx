@@ -265,6 +265,25 @@ const Dashboard = ({ userData, onUpdateData }) => {
     onUpdateData({ ...userData, stockInvestments: newInvestments });
   };
 
+  // Handler para deducir inversión del efectivo disponible
+  const handleDeductFromCash = (montoPEN, symbol, name) => {
+    // Crear transacción de inversión
+    const transaccionInversion = {
+      id: Date.now(),
+      tipo: 'Gasto',
+      monto: montoPEN,
+      descripcion: `Inversión en ${symbol} (${name})`,
+      categoria: 'Inversiones',
+      metodoPago: 'Efectivo',
+      fecha: new Date().toISOString().split('T')[0],
+      esInversion: true,
+      symbolInversion: symbol
+    };
+
+    const nuevasTransacciones = [...userData.transacciones, transaccionInversion];
+    onUpdateData({ ...userData, transacciones: nuevasTransacciones });
+  };
+
   // Handler de Pago Adelantado de Cuotas
   const handlePagarCuotasAdelantadas = (cuotasAPagar, montoTotal) => {
     if (!transaccionPagarAdelantado) return;
@@ -1009,6 +1028,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
               investments={userData.stockInvestments || []}
               onUpdateFavorites={handleUpdateFavorites}
               onUpdateInvestments={handleUpdateInvestments}
+              onDeductFromCash={handleDeductFromCash}
             />
           </Suspense>
         )}
