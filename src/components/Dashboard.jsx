@@ -265,13 +265,13 @@ const Dashboard = ({ userData, onUpdateData }) => {
     onUpdateData({ ...userData, stockInvestments: newInvestments });
   };
 
-  // Handler para deducir inversión del efectivo disponible
-  const handleDeductFromCash = (montoPEN, symbol, name) => {
-    // Crear transacción de inversión
+  // Handler para deducir inversión del efectivo disponible (ahora en USD)
+  const handleDeductFromCash = (montoUSD, symbol, name) => {
+    // Crear transacción de inversión en USD
     const transaccionInversion = {
       id: Date.now(),
       tipo: 'Gasto',
-      monto: montoPEN,
+      monto: montoUSD,
       descripcion: `Inversión en ${symbol} (${name})`,
       categoria: 'Inversiones',
       metodoPago: 'Efectivo',

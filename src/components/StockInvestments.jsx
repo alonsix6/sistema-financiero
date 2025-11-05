@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import FinnhubService from '../utils/finnhubService.js';
 import Modal from './Modal.jsx';
+import StockChart from './StockChart.jsx';
 
 const FormularioInversion = lazy(() => import('./forms/FormularioInversion.jsx'));
 
@@ -39,34 +40,17 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
   const [modalInvestment, setModalInvestment] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [investmentToEdit, setInvestmentToEdit] = useState(null);
-  const [exchangeRate, setExchangeRate] = useState(null);
-  const [loadingExchangeRate, setLoadingExchangeRate] = useState(false);
+  const [modalDetail, setModalDetail] = useState(false);
+  const [detailStock, setDetailStock] = useState(null);
+  const [chartData, setChartData] = useState(null);
+  const [chartPeriod, setChartPeriod] = useState('1M');
+  const [loadingChart, setLoadingChart] = useState(false);
   const updateIntervalRef = useRef(null);
 
   // Clases de estilo
   const textClass = darkMode ? 'text-white' : 'text-gray-800';
   const textSecondaryClass = darkMode ? 'text-gray-400' : 'text-gray-600';
   const cardClass = darkMode ? 'bg-gray-800' : 'bg-white';
-
-  /**
-   * Carga el tipo de cambio USD/PEN
-   */
-  const loadExchangeRate = async () => {
-    setLoadingExchangeRate(true);
-    try {
-      const rate = await FinnhubService.getExchangeRate('USD', 'PEN');
-      if (rate) {
-        setExchangeRate(rate);
-      } else {
-        setExchangeRate(3.75); // Fallback
-      }
-    } catch (error) {
-      console.error('Error cargando tipo de cambio:', error);
-      setExchangeRate(3.75); // Fallback
-    } finally {
-      setLoadingExchangeRate(false);
-    }
-  };
 
   /**
    * Obtiene datos de un símbolo
@@ -112,6 +96,94 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
 
     for (const { symbol, type } of uniqueSymbols) {
       await fetchStockData(symbol, type);
+    }
+  };
+
+  /**
+   * Obtiene el rango de fechas según el período seleccionado
+   */
+  const getDateRange = (period) => {
+    const now = Math.floor(Date.now() / 1000);
+    let from;
+    let resolution = 'D';
+
+    switch (period) {
+      case '1D':
+        from = now - (24 * 60 * 60);
+        resolution = '5';
+        break;
+      case '1W':
+        from = now - (7 * 24 * 60 * 60);
+        resolution = '30';
+        break;
+      case '1M':
+        from = now - (30 * 24 * 60 * 60);
+        resolution = 'D';
+        break;
+      case '3M':
+        from = now - (90 * 24 * 60 * 60);
+        resolution = 'D';
+        break;
+      case '6M':
+        from = now - (180 * 24 * 60 * 60);
+        resolution = 'D';
+        break;
+      case '1Y':
+        from = now - (365 * 24 * 60 * 60);
+        resolution = 'W';
+        break;
+      default:
+        from = now - (30 * 24 * 60 * 60);
+        resolution = 'D';
+    }
+
+    return { from, to: now, resolution };
+  };
+
+  /**
+   * Carga datos del gráfico para un símbolo
+   */
+  const loadChartData = async (symbol, period = '1M') => {
+    setLoadingChart(true);
+    try {
+      const { from, to, resolution } = getDateRange(period);
+      const data = await FinnhubService.getStockCandles(symbol, resolution, from, to);
+
+      if (data && data.s === 'ok') {
+        setChartData(data);
+      } else {
+        setChartData(null);
+        console.error('No chart data available');
+      }
+    } catch (error) {
+      console.error('Error loading chart data:', error);
+      setChartData(null);
+    } finally {
+      setLoadingChart(false);
+    }
+  };
+
+  /**
+   * Abre el modal de detalle con gráfico
+   */
+  const openDetailModal = async (symbol, name, type) => {
+    const data = stockData[symbol];
+    if (!data) {
+      await fetchStockData(symbol, type);
+    }
+
+    setDetailStock({ symbol, name, type });
+    setModalDetail(true);
+    loadChartData(symbol, chartPeriod);
+  };
+
+  /**
+   * Cambia el período del gráfico
+   */
+  const handlePeriodChange = (period) => {
+    setChartPeriod(period);
+    if (detailStock) {
+      loadChartData(detailStock.symbol, period);
     }
   };
 
@@ -309,9 +381,9 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
     } else {
       updatedInvestments = [...investments, investmentData];
 
-      // Deducir del efectivo disponible si es una nueva inversión
-      if (onDeductFromCash && investmentData.totalInvestedPEN) {
-        onDeductFromCash(investmentData.totalInvestedPEN, investmentData.symbol, investmentData.name);
+      // Deducir del efectivo disponible si es una nueva inversión (en USD)
+      if (onDeductFromCash && investmentData.totalInvested) {
+        onDeductFromCash(investmentData.totalInvested, investmentData.symbol, investmentData.name);
       }
     }
 
@@ -329,13 +401,6 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
     const updatedInvestments = investments.filter(inv => inv.id !== investmentId);
     onUpdateInvestments(updatedInvestments);
   };
-
-  /**
-   * Efecto para cargar tipo de cambio al inicio
-   */
-  useEffect(() => {
-    loadExchangeRate();
-  }, []);
 
   /**
    * Efecto para actualizaciones en tiempo real
@@ -543,6 +608,15 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
                 </div>
               )}
 
+              {/* Botón para ver gráfico */}
+              <button
+                onClick={() => openDetailModal(symbol, profile?.name || name || symbol, type)}
+                className={`w-full py-3 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} ${textClass} rounded-xl font-medium mb-3 transition-colors flex items-center justify-center gap-2`}
+              >
+                <span>📊</span>
+                <span>Ver Gráfico</span>
+              </button>
+
               {/* Botón para agregar inversión */}
               <button
                 onClick={() => openInvestmentModal(symbol, profile?.name || name || symbol, type, currentPrice)}
@@ -610,29 +684,9 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
     <div className="space-y-6">
       {/* Header con Toggle */}
       <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h2 className={`text-2xl font-bold ${textClass}`}>📊 Inversiones en Bolsa</h2>
-              {exchangeRate && (
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs ${textSecondaryClass} opacity-60`}>|</span>
-                  <button
-                    onClick={loadExchangeRate}
-                    disabled={loadingExchangeRate}
-                    className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors ${
-                      darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                    } disabled:opacity-50`}
-                    title="Actualizar tipo de cambio"
-                  >
-                    <span className="text-xs">💱</span>
-                    <span className={`text-xs font-medium ${textSecondaryClass}`}>
-                      {loadingExchangeRate ? '...' : `S/ ${exchangeRate.toFixed(4)}`}
-                    </span>
-                  </button>
-                </div>
-              )}
-            </div>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h2 className={`text-2xl font-bold ${textClass} mb-2`}>📊 Inversiones en Bolsa</h2>
             <p className={`text-sm ${textSecondaryClass}`}>
               Monitorea tus inversiones con análisis en tiempo real
             </p>
@@ -770,12 +824,134 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
               stockSymbol={selectedStock.symbol}
               stockName={selectedStock.name}
               currentPrice={selectedStock.currentPrice}
-              exchangeRate={exchangeRate}
               onSave={handleSaveInvestment}
               onClose={() => { setModalInvestment(false); setSelectedStock(null); setInvestmentToEdit(null); }}
             />
           )}
         </Suspense>
+      </Modal>
+
+      {/* Modal de detalle con gráfico */}
+      <Modal
+        isOpen={modalDetail}
+        onClose={() => { setModalDetail(false); setDetailStock(null); setChartData(null); setChartPeriod('1M'); }}
+        title=""
+      >
+        {detailStock && (
+          <div className="space-y-6">
+            {/* Header del modal */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className={`text-2xl font-bold ${textClass}`}>{detailStock.symbol}</h2>
+                <span className={`text-sm px-3 py-1 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} ${textSecondaryClass}`}>
+                  {detailStock.type === 'etf' ? '📊 ETF' : '📈 Stock'}
+                </span>
+              </div>
+              <p className={`text-sm ${textSecondaryClass}`}>{detailStock.name}</p>
+            </div>
+
+            {/* Precio y cambio */}
+            {stockData[detailStock.symbol]?.quote && (
+              <div>
+                <div className="flex items-baseline gap-3 mb-2">
+                  <p className={`text-4xl font-bold ${textClass}`}>
+                    ${stockData[detailStock.symbol].quote.c.toFixed(2)}
+                  </p>
+                  <p className={`text-xl font-semibold ${
+                    stockData[detailStock.symbol].quote.d >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {stockData[detailStock.symbol].quote.d >= 0 ? '+' : ''}
+                    ${stockData[detailStock.symbol].quote.d.toFixed(2)} (
+                    {stockData[detailStock.symbol].quote.dp >= 0 ? '+' : ''}
+                    {stockData[detailStock.symbol].quote.dp.toFixed(2)}%)
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Selector de período */}
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {['1D', '1W', '1M', '3M', '6M', '1Y'].map((period) => (
+                <button
+                  key={period}
+                  onClick={() => handlePeriodChange(period)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                    chartPeriod === period
+                      ? 'bg-blue-500 text-white'
+                      : darkMode
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {period}
+                </button>
+              ))}
+            </div>
+
+            {/* Gráfico */}
+            <div className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50'} rounded-xl p-4`}>
+              {loadingChart ? (
+                <LoadingSpinner />
+              ) : chartData ? (
+                <StockChart
+                  data={chartData}
+                  darkMode={darkMode}
+                  symbol={detailStock.symbol}
+                />
+              ) : (
+                <div className="h-64 flex items-center justify-center">
+                  <p className={textSecondaryClass}>No hay datos disponibles para este período</p>
+                </div>
+              )}
+            </div>
+
+            {/* Métricas del stock */}
+            {stockData[detailStock.symbol]?.quote && (
+              <div className={`grid grid-cols-2 gap-4 p-4 rounded-xl ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                <div>
+                  <p className={`text-xs ${textSecondaryClass} mb-1`}>Apertura</p>
+                  <p className={`text-lg font-semibold ${textClass}`}>
+                    ${stockData[detailStock.symbol].quote.o?.toFixed(2) || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className={`text-xs ${textSecondaryClass} mb-1`}>Máximo del día</p>
+                  <p className={`text-lg font-semibold ${textClass}`}>
+                    ${stockData[detailStock.symbol].quote.h?.toFixed(2) || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className={`text-xs ${textSecondaryClass} mb-1`}>Mínimo del día</p>
+                  <p className={`text-lg font-semibold ${textClass}`}>
+                    ${stockData[detailStock.symbol].quote.l?.toFixed(2) || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className={`text-xs ${textSecondaryClass} mb-1`}>Cierre anterior</p>
+                  <p className={`text-lg font-semibold ${textClass}`}>
+                    ${stockData[detailStock.symbol].quote.pc?.toFixed(2) || 'N/A'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Botón de inversión */}
+            <button
+              onClick={() => {
+                setModalDetail(false);
+                openInvestmentModal(
+                  detailStock.symbol,
+                  detailStock.name,
+                  detailStock.type,
+                  stockData[detailStock.symbol]?.quote?.c
+                );
+              }}
+              className="w-full py-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-semibold text-lg"
+            >
+              💰 Registrar Inversión
+            </button>
+          </div>
+        )}
       </Modal>
     </div>
   );
