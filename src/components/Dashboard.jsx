@@ -19,6 +19,7 @@ const SimuladorMovimiento = lazy(() => import('./forms/SimuladorMovimiento.jsx')
 const FormularioMeta = lazy(() => import('./forms/FormularioMeta.jsx'));
 const FormularioAporteMeta = lazy(() => import('./forms/FormularioAporteMeta.jsx'));
 const StockInvestments = lazy(() => import('./StockInvestments.jsx'));
+const SeccionCuotas = lazy(() => import('./SeccionCuotas.jsx'));
 
 // Componente de loading
 const LoadingSpinner = () => (
@@ -41,6 +42,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
   const [modalPagoAdelantado, setModalPagoAdelantado] = useState(false);
   const [modalMeta, setModalMeta] = useState(false);
   const [modalAporteMeta, setModalAporteMeta] = useState(false);
+  const [modalHistorialCuotas, setModalHistorialCuotas] = useState(false);
 
   // Estados de Formularios
   const [tipoTransaccion, setTipoTransaccion] = useState('Gasto');
@@ -53,6 +55,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
   const [proyeccionSimulada, setProyeccionSimulada] = useState(null);
   const [metaEditar, setMetaEditar] = useState(null);
   const [metaAportar, setMetaAportar] = useState(null);
+  const [transaccionHistorial, setTransaccionHistorial] = useState(null);
 
   // Filtros de fecha
   const hoy = new Date();
@@ -87,6 +90,64 @@ const Dashboard = ({ userData, onUpdateData }) => {
       onUpdateData({ ...userData, transacciones: transaccionesActualizadas, tarjetas: tarjetasActualizadas });
     }
   }, []);
+
+  // Marcar cuotas vencidas y notificar cuotas próximas al cargar
+  useEffect(() => {
+    // Marcar cuotas vencidas
+    const transaccionesConVencidas = Calculations.marcarCuotasVencidas(userData.transacciones);
+    const hayDiferencias = JSON.stringify(transaccionesConVencidas) !== JSON.stringify(userData.transacciones);
+
+    if (hayDiferencias) {
+      onUpdateData({ ...userData, transacciones: transaccionesConVencidas });
+    }
+
+    // Notificar cuotas próximas (dentro de 7 días)
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const enUnaSemana = new Date(hoy);
+    enUnaSemana.setDate(enUnaSemana.getDate() + 7);
+
+    const cuotasProximas = userData.transacciones
+      .filter(t => t.esCuotas && t.cuotasInfo.cuotasRestantes > 0)
+      .flatMap(t => {
+        const tarjeta = userData.tarjetas.find(tj => tj.id === parseInt(t.metodoPago));
+
+        return t.cuotasInfo.fechasCobro
+          .filter(c => c.estado === 'pendiente' || c.estado === 'parcial')
+          .map(c => ({
+            fecha: new Date(c.fecha + 'T12:00:00'),
+            descripcion: t.descripcion,
+            monto: c.estado === 'parcial' ? (c.montoPendiente || c.monto) : (c.monto || t.cuotasInfo.montoPorCuota),
+            tarjeta: tarjeta?.nombre || 'Tarjeta',
+            cuota: c.cuota,
+            total: t.cuotasInfo.numeroCuotas
+          }))
+          .filter(c => c.fecha >= hoy && c.fecha <= enUnaSemana);
+      })
+      .sort((a, b) => a.fecha - b.fecha);
+
+    if (cuotasProximas.length > 0) {
+      // Mostrar notificación (solo una vez por sesión)
+      const yaNotificado = sessionStorage.getItem('cuotas_notificadas');
+
+      if (!yaNotificado) {
+        const mensaje = `📅 Tienes ${cuotasProximas.length} cuota(s) próxima(s) en los próximos 7 días:\n\n` +
+          cuotasProximas.slice(0, 3).map(c =>
+            `• ${c.descripcion} - S/ ${c.monto.toFixed(2)} (${c.fecha.toLocaleDateString('es-PE')})`
+          ).join('\n') +
+          (cuotasProximas.length > 3 ? `\n\n... y ${cuotasProximas.length - 3} más` : '');
+
+        // Usar timeout para no bloquear carga inicial
+        setTimeout(() => {
+          if (confirm(mensaje + '\n\n¿Ver sección de cuotas?')) {
+            setActiveTab('cuotas');
+          }
+          sessionStorage.setItem('cuotas_notificadas', 'true');
+        }, 1500);
+      }
+    }
+  }, [userData.transacciones]);
 
   // Cálculos memoizados
   const resumen = useMemo(() =>
@@ -144,7 +205,19 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
   const handlePagarTarjeta = (monto) => {
     if (!tarjetaPagar) return;
-    const transaccionPago = {
+
+    // Identificar compras con cuotas pendientes en esta tarjeta
+    const comprasConCuotas = userData.transacciones.filter(t =>
+      t.esCuotas &&
+      parseInt(t.metodoPago) === tarjetaPagar.id &&
+      t.cuotasInfo.cuotasRestantes > 0
+    );
+
+    const totalCuotasPendientes = comprasConCuotas.reduce((sum, c) =>
+      sum + (c.cuotasInfo.cuotasRestantes * c.cuotasInfo.montoPorCuota), 0
+    );
+
+    let transaccionPago = {
       id: Date.now(),
       tipo: 'PagoTarjeta',
       monto: monto,
@@ -154,13 +227,71 @@ const Dashboard = ({ userData, onUpdateData }) => {
       fecha: new Date().toISOString().split('T')[0],
       tarjetaId: tarjetaPagar.id
     };
+
+    let nuevasTransacciones = [...userData.transacciones, transaccionPago];
+
+    // Si hay cuotas pendientes y el monto puede cubrir alguna, preguntar
+    if (comprasConCuotas.length > 0 && monto > 0 && totalCuotasPendientes > 0) {
+      const mensaje = `💳 Tienes S/ ${totalCuotasPendientes.toFixed(2)} en ${comprasConCuotas.length} compra(s) en cuotas pendientes.\n\n¿Deseas usar parte del pago (S/ ${monto.toFixed(2)}) para pagar cuotas automáticamente?\n\n✅ Se pagarán cuotas completas empezando por las más antiguas.`;
+
+      if (confirm(mensaje)) {
+        // Guardar estado anterior para comparar
+        const transaccionesAntes = [...nuevasTransacciones];
+
+        // Pagar cuotas automáticamente
+        nuevasTransacciones = Calculations.pagarCuotasAutomaticamente(
+          nuevasTransacciones,
+          tarjetaPagar.id,
+          monto
+        );
+
+        // Calcular cuántas cuotas se pagaron
+        let cuotasPagadasTotal = 0;
+        const comprasAfectadas = [];
+
+        comprasConCuotas.forEach(compra => {
+          const transaccionActualizada = nuevasTransacciones.find(t => t.id === compra.id);
+          if (transaccionActualizada) {
+            const cuotasPagadasNuevas = transaccionActualizada.cuotasInfo.cuotasPagadas - compra.cuotasInfo.cuotasPagadas;
+            if (cuotasPagadasNuevas > 0) {
+              cuotasPagadasTotal += cuotasPagadasNuevas;
+              comprasAfectadas.push({
+                descripcion: compra.descripcion,
+                cuotas: cuotasPagadasNuevas,
+                monto: cuotasPagadasNuevas * compra.cuotasInfo.montoPorCuota
+              });
+            }
+          }
+        });
+
+        // Actualizar descripción de transacción de pago con info de cuotas
+        if (cuotasPagadasTotal > 0) {
+          const detalleCompras = comprasAfectadas.map(c =>
+            `${c.descripcion} (${c.cuotas} cuota${c.cuotas > 1 ? 's' : ''})`
+          ).join(', ');
+
+          nuevasTransacciones = nuevasTransacciones.map(t => {
+            if (t.id === transaccionPago.id) {
+              return {
+                ...t,
+                descripcion: `${t.descripcion} - Incluye pago de ${cuotasPagadasTotal} cuota(s): ${detalleCompras}`,
+                esPagoAutomatico: true,
+                cuotasAfectadas: comprasAfectadas
+              };
+            }
+            return t;
+          });
+        }
+      }
+    }
+
     const tarjetasActualizadas = userData.tarjetas.map(t => {
       if (t.id === tarjetaPagar.id) {
         return { ...t, saldoActual: Math.max(0, t.saldoActual - monto) };
       }
       return t;
     });
-    const nuevasTransacciones = [...userData.transacciones, transaccionPago];
+
     onUpdateData({ ...userData, transacciones: nuevasTransacciones, tarjetas: tarjetasActualizadas });
     setModalPagoTarjeta(false);
     setTarjetaPagar(null);
@@ -199,17 +330,52 @@ const Dashboard = ({ userData, onUpdateData }) => {
   };
 
   const handleDeleteTransaccion = (id) => {
-    if (!confirm('¿Eliminar esta transacción?')) return;
     const transaccion = userData.transacciones.find(t => t.id === id);
+
+    // Mensaje personalizado para compras en cuotas
+    let mensaje = '¿Eliminar esta transacción?';
+
+    if (transaccion && transaccion.esCuotas) {
+      const cuotasPagadas = transaccion.cuotasInfo.cuotasPagadas;
+      const montoPagado = cuotasPagadas * transaccion.cuotasInfo.montoPorCuota;
+      const cuotasRestantes = transaccion.cuotasInfo.cuotasRestantes;
+      const montoRestante = cuotasRestantes * transaccion.cuotasInfo.montoPorCuota;
+
+      mensaje = `⚠️ ELIMINAR COMPRA EN CUOTAS\n\n` +
+                `Compra: ${transaccion.descripcion}\n` +
+                `Monto original: S/ ${transaccion.monto.toFixed(2)}\n\n` +
+                `📊 Estado actual:\n` +
+                `• Cuotas pagadas: ${cuotasPagadas}/${transaccion.cuotasInfo.numeroCuotas} (S/ ${montoPagado.toFixed(2)})\n` +
+                `• Cuotas pendientes: ${cuotasRestantes} (S/ ${montoRestante.toFixed(2)})\n\n`;
+
+      if (cuotasPagadas > 0) {
+        mensaje += `⚠️ IMPORTANTE: Ya pagaste ${cuotasPagadas} cuota(s) (S/ ${montoPagado.toFixed(2)}).\n` +
+                   `Al eliminar, esta información se perderá.\n\n`;
+      }
+
+      mensaje += `✅ Al eliminar, se liberarán S/ ${montoRestante.toFixed(2)} de crédito de tu tarjeta.\n\n` +
+                 `¿Estás seguro de eliminar esta compra?`;
+    }
+
+    if (!confirm(mensaje)) return;
+
     let nuevasTarjetas = userData.tarjetas;
+
+    // Liberar crédito de tarjeta si es gasto con tarjeta
     if (transaccion && transaccion.tipo === 'Gasto' && transaccion.metodoPago !== 'Efectivo') {
       nuevasTarjetas = nuevasTarjetas.map(t => {
         if (t.id === parseInt(transaccion.metodoPago)) {
-          return { ...t, saldoActual: Math.max(0, t.saldoActual - transaccion.monto) };
+          // Si es compra en cuotas, solo liberar el monto restante
+          const montoALiberar = transaccion.esCuotas
+            ? (transaccion.cuotasInfo.cuotasRestantes * transaccion.cuotasInfo.montoPorCuota)
+            : transaccion.monto;
+          return { ...t, saldoActual: Math.max(0, t.saldoActual - montoALiberar) };
         }
         return t;
       });
     }
+
+    // Restaurar crédito si es pago de tarjeta
     if (transaccion && transaccion.tipo === 'PagoTarjeta') {
       nuevasTarjetas = nuevasTarjetas.map(t => {
         if (t.id === transaccion.tarjetaId) {
@@ -218,6 +384,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
         return t;
       });
     }
+
     const nuevasTransacciones = userData.transacciones.filter(t => t.id !== id);
     onUpdateData({ ...userData, transacciones: nuevasTransacciones, tarjetas: nuevasTarjetas });
   };
@@ -285,42 +452,78 @@ const Dashboard = ({ userData, onUpdateData }) => {
   };
 
   // Handler de Pago Adelantado de Cuotas
-  const handlePagarCuotasAdelantadas = (cuotasAPagar, montoTotal) => {
+  const handlePagarCuotasAdelantadas = (cuotasAPagar, montoTotal, montoParcial = 0) => {
     if (!transaccionPagarAdelantado) return;
+
+    // Descripción del pago
+    const descripcionPago = montoParcial > 0
+      ? `Pago adelantado ${transaccionPagarAdelantado.descripcion} (${cuotasAPagar} cuotas + S/ ${montoParcial.toFixed(2)} parcial)`
+      : `Pago adelantado ${transaccionPagarAdelantado.descripcion} (${cuotasAPagar} cuotas)`;
 
     // Crear transacción de pago adelantado
     const transaccionPago = {
       id: Date.now(),
       tipo: 'PagoTarjeta',
       monto: montoTotal,
-      descripcion: `Pago adelantado ${transaccionPagarAdelantado.descripcion} (${cuotasAPagar} cuotas)`,
+      descripcion: descripcionPago,
       categoria: 'Pago Cuotas Adelantadas',
       metodoPago: 'Efectivo',
       fecha: new Date().toISOString().split('T')[0],
       tarjetaId: parseInt(transaccionPagarAdelantado.metodoPago),
+      tipoPago: 'adelantado',
       esPagoAdelantado: true,
-      transaccionOriginalId: transaccionPagarAdelantado.id
+      transaccionOriginalId: transaccionPagarAdelantado.id,
+      cuotasPagadas: cuotasAPagar,
+      montoParcial: montoParcial
     };
 
     // Actualizar la transacción con cuotas
     const transaccionesActualizadas = userData.transacciones.map(t => {
       if (t.id === transaccionPagarAdelantado.id) {
         const cuotasPagadasAntes = t.cuotasInfo.cuotasPagadas;
+
         // Marcar cuotas como pagadas
         const nuevasFechasCobro = t.cuotasInfo.fechasCobro.map((cuota, idx) => {
+          // Cuotas completas
           if (idx >= cuotasPagadasAntes && idx < cuotasPagadasAntes + cuotasAPagar) {
             return { ...cuota, estado: 'pagada' };
           }
+
+          // Si hay pago parcial, marcar la siguiente cuota como parcial
+          if (montoParcial > 0 && idx === cuotasPagadasAntes + cuotasAPagar) {
+            return {
+              ...cuota,
+              estado: 'parcial',
+              pagoParcial: montoParcial,
+              montoPendiente: Math.round((cuota.monto - montoParcial) * 100) / 100
+            };
+          }
+
           return cuota;
         });
+
+        // Calcular cuotas restantes
+        const cuotasConParcial = montoParcial > 0 ? 1 : 0;
+        const nuevasCuotasRestantes = t.cuotasInfo.cuotasRestantes - cuotasAPagar - cuotasConParcial;
 
         return {
           ...t,
           cuotasInfo: {
             ...t.cuotasInfo,
-            cuotasPagadas: t.cuotasInfo.cuotasPagadas + cuotasAPagar,
-            cuotasRestantes: t.cuotasInfo.cuotasRestantes - cuotasAPagar,
-            fechasCobro: nuevasFechasCobro
+            cuotasPagadas: t.cuotasInfo.cuotasPagadas + cuotasAPagar + cuotasConParcial,
+            cuotasRestantes: nuevasCuotasRestantes,
+            fechasCobro: nuevasFechasCobro,
+            ultimaActualizacion: new Date().toISOString(),
+            pagosAdelantados: [
+              ...(t.cuotasInfo.pagosAdelantados || []),
+              {
+                fecha: new Date().toISOString().split('T')[0],
+                cuotasPagadas: cuotasAPagar,
+                montoTotal: montoTotal,
+                montoParcial: montoParcial,
+                transaccionPagoId: transaccionPago.id
+              }
+            ]
           }
         };
       }
@@ -347,7 +550,11 @@ const Dashboard = ({ userData, onUpdateData }) => {
     setModalPagoAdelantado(false);
     setTransaccionPagarAdelantado(null);
 
-    alert(`✅ Pago adelantado registrado correctamente\n\n💳 ${cuotasAPagar} cuota(s) pagadas\n💰 S/ ${montoTotal.toFixed(2)} liberados de tu tarjeta`);
+    const mensajeExito = montoParcial > 0
+      ? `✅ Pago registrado correctamente\n\n💳 ${cuotasAPagar} cuota(s) completa(s) pagadas\n💰 S/ ${montoParcial.toFixed(2)} abonados a la siguiente cuota\n\nFalta S/ ${(transaccionPagarAdelantado.cuotasInfo.montoPorCuota - montoParcial).toFixed(2)} en la próxima cuota`
+      : `✅ Pago adelantado registrado correctamente\n\n💳 ${cuotasAPagar} cuota(s) pagadas\n💰 S/ ${montoTotal.toFixed(2)} liberados de tu tarjeta`;
+
+    alert(mensajeExito);
   };
 
   // Handlers de Metas
@@ -441,7 +648,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
       {/* Navigation Tabs */}
       <div className={`${cardClass} border-b sticky top-16 z-30 transition-colors`}>
         <div className="max-w-7xl mx-auto px-4 flex gap-1 overflow-x-auto">
-          {['inicio', 'tarjetas', 'transacciones', 'inversiones', 'metas', 'proyección', 'recurrencias'].map(tab => (
+          {['inicio', 'tarjetas', 'transacciones', 'cuotas', 'inversiones', 'metas', 'proyección', 'recurrencias'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -860,7 +1067,18 @@ const Dashboard = ({ userData, onUpdateData }) => {
                               {fechaLocal.toLocaleDateString('es-PE')}
                               {t.esRecurrente && <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">♻️</span>}
                               {t.tipo === 'PagoTarjeta' && !t.esPagoAdelantado && <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">💳</span>}
-                              {t.esCuotas && <span className="ml-2 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold">💳 {t.cuotasInfo.cuotasPagadas}/{t.cuotasInfo.numeroCuotas} cuotas</span>}
+                              {t.esCuotas && (
+                                <span className={`ml-2 text-xs px-2 py-1 rounded font-semibold ${
+                                  t.cuotasInfo.fechasCobro && t.cuotasInfo.fechasCobro.some(c => c.estado === 'parcial')
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : 'bg-purple-100 text-purple-800'
+                                }`}>
+                                  💳 {t.cuotasInfo.cuotasPagadas}/{t.cuotasInfo.numeroCuotas} cuotas
+                                  {t.cuotasInfo.fechasCobro && t.cuotasInfo.fechasCobro.some(c => c.estado === 'parcial') && (
+                                    <span className="ml-1" title="Tiene cuota pagada parcialmente">⚠️</span>
+                                  )}
+                                </span>
+                              )}
                             </td>
                             <td className={`px-6 py-4 text-sm ${textClass}`}>
                               <div>
@@ -874,6 +1092,17 @@ const Dashboard = ({ userData, onUpdateData }) => {
                                     className="mt-1 text-xs text-purple-600 hover:text-purple-800 font-semibold"
                                   >
                                     💳 Pagar {t.cuotasInfo.cuotasRestantes} cuota(s) adelantada(s)
+                                  </button>
+                                )}
+                                {t.esCuotas && t.cuotasInfo.pagosAdelantados && t.cuotasInfo.pagosAdelantados.length > 0 && (
+                                  <button
+                                    onClick={() => {
+                                      setTransaccionHistorial(t);
+                                      setModalHistorialCuotas(true);
+                                    }}
+                                    className="mt-1 ml-2 text-xs text-gray-600 hover:text-gray-800 font-semibold"
+                                  >
+                                    📋 Ver historial
                                   </button>
                                 )}
                               </div>
@@ -1017,6 +1246,21 @@ const Dashboard = ({ userData, onUpdateData }) => {
               </>
             )}
           </div>
+        )}
+
+        {/* Vista Cuotas */}
+        {activeTab === 'cuotas' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <SeccionCuotas
+              transacciones={userData.transacciones}
+              tarjetas={userData.tarjetas}
+              efectivoDisponible={efectivoDisponible}
+              onPagarCuotas={(transaccion) => {
+                setTransaccionPagarAdelantado(transaccion);
+                setModalPagoAdelantado(true);
+              }}
+            />
+          </Suspense>
         )}
 
         {/* Vista Inversiones */}
@@ -1514,6 +1758,70 @@ const Dashboard = ({ userData, onUpdateData }) => {
         <Suspense fallback={<LoadingSpinner />}>
           {metaAportar && <FormularioAporteMeta meta={metaAportar} disponibleParaAhorrar={disponibleParaAhorrar} onAportar={handleAportarMeta} onClose={() => { setModalAporteMeta(false); setMetaAportar(null); }} />}
         </Suspense>
+      </Modal>
+
+      {/* Modal Historial de Pagos Adelantados */}
+      <Modal isOpen={modalHistorialCuotas} onClose={() => { setModalHistorialCuotas(false); setTransaccionHistorial(null); }} title="📋 Historial de Pagos Adelantados">
+        {transaccionHistorial && (
+          <div className="space-y-4">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="font-bold text-lg text-gray-800">{transaccionHistorial.descripcion}</p>
+              <p className="text-sm text-gray-600 mt-1">
+                {transaccionHistorial.cuotasInfo.cuotasPagadas}/{transaccionHistorial.cuotasInfo.numeroCuotas} cuotas pagadas
+              </p>
+            </div>
+
+            {transaccionHistorial.cuotasInfo.pagosAdelantados && transaccionHistorial.cuotasInfo.pagosAdelantados.length > 0 ? (
+              <div className="space-y-3">
+                {transaccionHistorial.cuotasInfo.pagosAdelantados.map((pago, idx) => (
+                  <div key={idx} className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-800">
+                          {new Date(pago.fecha).toLocaleDateString('es-PE', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {pago.cuotasPagadas} cuota(s) completa(s) pagada(s)
+                          {pago.montoParcial > 0 && (
+                            <span className="text-amber-600 font-semibold"> + pago parcial</span>
+                          )}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-green-700 text-lg">
+                          S/ {pago.montoTotal.toFixed(2)}
+                        </p>
+                        {pago.montoParcial > 0 && (
+                          <p className="text-xs text-amber-600 mt-1">
+                            (incluye S/ {pago.montoParcial.toFixed(2)} parcial)
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>No hay pagos adelantados registrados</p>
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                setModalHistorialCuotas(false);
+                setTransaccionHistorial(null);
+              }}
+              className="w-full mt-4 bg-gray-600 text-white py-3 rounded-xl hover:bg-gray-700 font-semibold transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
+        )}
       </Modal>
 
       {/* Botones Flotantes Móviles */}

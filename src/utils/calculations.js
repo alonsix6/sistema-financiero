@@ -364,6 +364,98 @@ const Calculations = {
   },
 
   /**
+   * Calcula cuota mensual con intereses usando fórmula de amortización francesa
+   * Formula: C = P × (r × (1+r)^n) / ((1+r)^n - 1)
+   * Donde:
+   * - C = Cuota mensual
+   * - P = Principal (monto)
+   * - r = Tasa mensual (TEA convertida a mensual)
+   * - n = Número de cuotas
+   * @param {number} monto - Monto principal
+   * @param {number} tea - Tasa Efectiva Anual (%)
+   * @param {number} numeroCuotas - Número de cuotas
+   * @returns {Object} Información de cuotas con intereses
+   */
+  calcularCuotaConIntereses: (monto, tea, numeroCuotas) => {
+    if (!tea || tea <= 0) {
+      // Sin intereses, retornar cálculo simple
+      const montoPorCuota = Math.round((monto / numeroCuotas) * 100) / 100;
+      const totalCalculado = montoPorCuota * numeroCuotas;
+      const diferencia = Math.round((monto - totalCalculado) * 100) / 100;
+
+      const cronograma = [];
+      for (let i = 1; i <= numeroCuotas; i++) {
+        cronograma.push({
+          cuota: i,
+          cuotaMonto: i === numeroCuotas ? montoPorCuota + diferencia : montoPorCuota,
+          capital: i === numeroCuotas ? montoPorCuota + diferencia : montoPorCuota,
+          interes: 0,
+          saldoRestante: monto - (montoPorCuota * i)
+        });
+      }
+
+      return {
+        montoPorCuota: montoPorCuota,
+        montoTotal: monto,
+        interesTotal: 0,
+        cronograma: cronograma
+      };
+    }
+
+    // Convertir TEA a tasa mensual
+    const tasaMensual = Math.pow(1 + tea / 100, 1 / 12) - 1;
+
+    // Calcular cuota con fórmula de amortización francesa
+    const cuotaMensual = monto * (tasaMensual * Math.pow(1 + tasaMensual, numeroCuotas)) /
+                         (Math.pow(1 + tasaMensual, numeroCuotas) - 1);
+
+    const cuotaRedondeada = Math.round(cuotaMensual * 100) / 100;
+
+    // Generar cronograma de pagos
+    let saldoRestante = monto;
+    const cronograma = [];
+
+    for (let i = 1; i <= numeroCuotas; i++) {
+      const interesCuota = Math.round(saldoRestante * tasaMensual * 100) / 100;
+      const capitalCuota = Math.round((cuotaRedondeada - interesCuota) * 100) / 100;
+
+      // Ajuste en última cuota por redondeos
+      if (i === numeroCuotas) {
+        const capitalReal = saldoRestante;
+        const cuotaReal = Math.round((capitalReal + interesCuota) * 100) / 100;
+
+        cronograma.push({
+          cuota: i,
+          cuotaMonto: cuotaReal,
+          capital: capitalReal,
+          interes: interesCuota,
+          saldoRestante: 0
+        });
+      } else {
+        cronograma.push({
+          cuota: i,
+          cuotaMonto: cuotaRedondeada,
+          capital: capitalCuota,
+          interes: interesCuota,
+          saldoRestante: Math.round((saldoRestante - capitalCuota) * 100) / 100
+        });
+
+        saldoRestante -= capitalCuota;
+      }
+    }
+
+    const montoTotal = cronograma.reduce((sum, c) => sum + c.cuotaMonto, 0);
+    const interesTotal = montoTotal - monto;
+
+    return {
+      montoPorCuota: cuotaRedondeada,
+      montoTotal: Math.round(montoTotal * 100) / 100,
+      interesTotal: Math.round(interesTotal * 100) / 100,
+      cronograma: cronograma
+    };
+  },
+
+  /**
    * Genera fechas de cobro para compras en cuotas
    * @param {string} fechaCompra - Fecha de compra (YYYY-MM-DD)
    * @param {number} numeroCuotas - Número de cuotas
@@ -387,7 +479,8 @@ const Calculations = {
       fechas.push({
         cuota: i,
         fecha: fechaCobro.toISOString().split('T')[0],
-        estado: 'pendiente'
+        estado: 'pendiente',
+        monto: 0 // Se asignará después
       });
     }
 
@@ -399,21 +492,65 @@ const Calculations = {
    * @param {Object} transaccionBase - Transacción base
    * @param {number} numeroCuotas - Número de cuotas
    * @param {Object} tarjeta - Objeto tarjeta
+   * @param {boolean} tieneIntereses - Si las cuotas tienen intereses (default: false)
+   * @param {number} tea - Tasa Efectiva Anual si tiene intereses (default: 0)
    * @returns {Object} Transacción con información de cuotas
    */
-  crearTransaccionConCuotas: (transaccionBase, numeroCuotas, tarjeta) => {
-    const montoPorCuota = Math.round((transaccionBase.monto / numeroCuotas) * 100) / 100;
+  crearTransaccionConCuotas: (transaccionBase, numeroCuotas, tarjeta, tieneIntereses = false, tea = 0) => {
+    let cuotasData;
+
+    if (tieneIntereses && tea > 0) {
+      // Calcular con intereses usando TEA
+      cuotasData = Calculations.calcularCuotaConIntereses(
+        transaccionBase.monto,
+        tea,
+        numeroCuotas
+      );
+    } else {
+      // Sin intereses (comportamiento actual mejorado)
+      const montoPorCuota = Math.round((transaccionBase.monto / numeroCuotas) * 100) / 100;
+      const totalCalculado = montoPorCuota * numeroCuotas;
+      const diferencia = Math.round((transaccionBase.monto - totalCalculado) * 100) / 100;
+
+      cuotasData = {
+        montoPorCuota: montoPorCuota,
+        montoTotal: transaccionBase.monto,
+        interesTotal: 0,
+        cronograma: Array.from({ length: numeroCuotas }, (_, i) => ({
+          cuota: i + 1,
+          cuotaMonto: i === numeroCuotas - 1 ? montoPorCuota + diferencia : montoPorCuota,
+          capital: i === numeroCuotas - 1 ? montoPorCuota + diferencia : montoPorCuota,
+          interes: 0,
+          saldoRestante: 0
+        }))
+      };
+    }
+
     const fechasCobro = Calculations.generarFechasCuotas(transaccionBase.fecha, numeroCuotas, tarjeta);
+
+    // Combinar fechas con cronograma de montos
+    const fechasConDetalle = fechasCobro.map((fecha, idx) => ({
+      ...fecha,
+      monto: cuotasData.cronograma[idx].cuotaMonto,
+      interesCuota: cuotasData.cronograma[idx].interes,
+      capitalCuota: cuotasData.cronograma[idx].capital
+    }));
 
     return {
       ...transaccionBase,
       esCuotas: true,
       cuotasInfo: {
         numeroCuotas: numeroCuotas,
-        montoPorCuota: montoPorCuota,
+        montoPorCuota: cuotasData.montoPorCuota,
+        tieneIntereses: tieneIntereses,
+        tea: tieneIntereses ? tea : undefined,
+        montoTotalConIntereses: cuotasData.montoTotal,
+        interesTotal: cuotasData.interesTotal,
         cuotasPagadas: 0,
         cuotasRestantes: numeroCuotas,
-        fechasCobro: fechasCobro
+        fechasCobro: fechasConDetalle,
+        fechaCreacion: new Date().toISOString(),
+        ultimaActualizacion: new Date().toISOString()
       }
     };
   },
@@ -560,6 +697,40 @@ const Calculations = {
       anios: Math.floor(meses / 12),
       mesesRestantes: meses % 12
     };
+  },
+
+  /**
+   * Marca cuotas vencidas (cuotas pendientes con fecha pasada)
+   * @param {Array} transacciones - Lista de transacciones
+   * @returns {Array} Transacciones con cuotas vencidas marcadas
+   */
+  marcarCuotasVencidas: (transacciones) => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    return transacciones.map(t => {
+      if (!t.esCuotas) return t;
+
+      const fechasActualizadas = t.cuotasInfo.fechasCobro.map(cuota => {
+        if (cuota.estado === 'pendiente' || cuota.estado === 'parcial') {
+          const fechaCuota = new Date(cuota.fecha + 'T12:00:00');
+          fechaCuota.setHours(0, 0, 0, 0);
+
+          if (fechaCuota < hoy) {
+            return { ...cuota, estado: cuota.estado === 'parcial' ? 'parcial_vencida' : 'vencida' };
+          }
+        }
+        return cuota;
+      });
+
+      return {
+        ...t,
+        cuotasInfo: {
+          ...t.cuotasInfo,
+          fechasCobro: fechasActualizadas
+        }
+      };
+    });
   },
 
   /**
