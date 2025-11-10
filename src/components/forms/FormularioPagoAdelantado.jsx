@@ -6,13 +6,45 @@ import React, { useState } from 'react';
 
 const FormularioPagoAdelantado = ({ transaccion, efectivoDisponible, onPagar, onClose }) => {
   const [montoPago, setMontoPago] = useState('');
+  const [tipoPago, setTipoPago] = useState('completas'); // 'completas' o 'parcial'
+
   const montoCuota = transaccion.cuotasInfo.montoPorCuota;
   const cuotasRestantes = transaccion.cuotasInfo.cuotasRestantes;
   const saldoRestante = cuotasRestantes * montoCuota;
 
-  const cuotasQueSePagaran = montoPago ? Math.floor(parseFloat(montoPago) / montoCuota) : 0;
-  const cuotasQueQuedaran = cuotasRestantes - cuotasQueSePagaran;
-  const montoRealAPagar = cuotasQueSePagaran * montoCuota;
+  // Cálculos según tipo de pago
+  let cuotasQueSePagaran, montoRealAPagar, montoParcial, cuotasQueQuedaran;
+
+  if (tipoPago === 'completas') {
+    // Comportamiento actual: solo cuotas completas
+    cuotasQueSePagaran = montoPago ? Math.floor(parseFloat(montoPago) / montoCuota) : 0;
+    montoRealAPagar = cuotasQueSePagaran * montoCuota;
+    montoParcial = 0;
+    cuotasQueQuedaran = cuotasRestantes - cuotasQueSePagaran;
+  } else {
+    // NUEVO: Permite monto parcial
+    const montoIngresado = montoPago ? parseFloat(montoPago) : 0;
+
+    if (montoIngresado <= 0) {
+      cuotasQueSePagaran = 0;
+      montoRealAPagar = 0;
+      montoParcial = 0;
+      cuotasQueQuedaran = cuotasRestantes;
+    } else if (montoIngresado >= saldoRestante) {
+      // Paga todas las cuotas restantes
+      cuotasQueSePagaran = cuotasRestantes;
+      montoRealAPagar = saldoRestante;
+      montoParcial = 0;
+      cuotasQueQuedaran = 0;
+    } else {
+      // Pago parcial
+      cuotasQueSePagaran = Math.floor(montoIngresado / montoCuota);
+      const montoEnteras = cuotasQueSePagaran * montoCuota;
+      montoParcial = Math.round((montoIngresado - montoEnteras) * 100) / 100;
+      montoRealAPagar = montoIngresado;
+      cuotasQueQuedaran = cuotasRestantes - cuotasQueSePagaran - (montoParcial > 0 ? 1 : 0);
+    }
+  }
 
   const calcularFechaFin = () => {
     if (cuotasQueQuedaran <= 0) return 'Completado';
@@ -30,7 +62,7 @@ const FormularioPagoAdelantado = ({ transaccion, efectivoDisponible, onPagar, on
       alert('Ingresa un monto válido');
       return;
     }
-    if (cuotasQueSePagaran <= 0) {
+    if (cuotasQueSePagaran <= 0 && montoParcial <= 0) {
       alert('El monto no alcanza para pagar ni una cuota completa');
       return;
     }
@@ -42,7 +74,7 @@ const FormularioPagoAdelantado = ({ transaccion, efectivoDisponible, onPagar, on
       alert('No puedes pagar más cuotas de las que quedan pendientes');
       return;
     }
-    onPagar(cuotasQueSePagaran, montoRealAPagar);
+    onPagar(cuotasQueSePagaran, montoRealAPagar, montoParcial);
   };
 
   return (
@@ -68,6 +100,30 @@ const FormularioPagoAdelantado = ({ transaccion, efectivoDisponible, onPagar, on
       </div>
 
       <div>
+        <label className="block text-sm font-semibold mb-2">Tipo de pago</label>
+        <div className="flex gap-3 mb-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              value="completas"
+              checked={tipoPago === 'completas'}
+              onChange={(e) => setTipoPago(e.target.value)}
+              className="w-4 h-4 text-purple-600"
+            />
+            <span className="text-sm">Solo cuotas completas</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              value="parcial"
+              checked={tipoPago === 'parcial'}
+              onChange={(e) => setTipoPago(e.target.value)}
+              className="w-4 h-4 text-purple-600"
+            />
+            <span className="text-sm">Permitir pago parcial</span>
+          </label>
+        </div>
+
         <label className="block text-sm font-medium text-gray-700 mb-2">Monto a pagar (S/)</label>
         <input
           type="number"
@@ -77,8 +133,19 @@ const FormularioPagoAdelantado = ({ transaccion, efectivoDisponible, onPagar, on
           placeholder="Ingresa el monto"
           className="w-full px-4 py-3 border-2 border-purple-300 rounded-xl text-xl font-bold focus:border-purple-500"
         />
-        <p className="text-xs text-gray-500 mt-1">💡 Puedes pagar múltiplos de S/ {montoCuota.toFixed(2)}</p>
+        <p className="text-xs text-gray-500 mt-1">💡 Cuota: S/ {montoCuota.toFixed(2)} {tipoPago === 'parcial' && '(Se aceptan montos parciales)'}</p>
       </div>
+
+      {tipoPago === 'parcial' && montoParcial > 0 && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4">
+          <p className="text-sm font-bold text-amber-900 mb-2">💡 Pago Parcial Detectado</p>
+          <div className="text-xs space-y-1 text-amber-700">
+            <div>• Cuotas completas: {cuotasQueSePagaran} × S/ {montoCuota.toFixed(2)} = S/ {(cuotasQueSePagaran * montoCuota).toFixed(2)}</div>
+            <div>• Abono parcial a siguiente cuota: S/ {montoParcial.toFixed(2)}</div>
+            <div className="pt-1 border-t border-amber-200 font-semibold">• Queda pendiente en próxima cuota: S/ {(montoCuota - montoParcial).toFixed(2)}</div>
+          </div>
+        </div>
+      )}
 
       {montoPago && cuotasQueSePagaran > 0 && (
         <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4">
