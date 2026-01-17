@@ -287,7 +287,7 @@ const Calculations = {
             const eventoExistente = eventos.find(e => e.tarjetaId === tarjetaSimulada.id && Math.abs(e.fecha.getTime() - fechaImpacto.getTime()) < 86400000);
             if (eventoExistente) {
               eventoExistente.monto += montoSim;
-              eventoExistente.descripcion = `${eventoExistente.descripcion.replace(' + 🔮', '')} + 🔮 ${simulacion.descripcion}`;
+              eventoExistente.descripcion = `${eventoExistente.descripcion.replace(' + Sim:', '')} + Sim: ${simulacion.descripcion}`;
               eventoExistente.esSimulacion = true;
               agregarEvento = false;
             }
@@ -302,7 +302,7 @@ const Calculations = {
         eventos.push({
           fecha: fechaImpacto,
           tipo: 'simulacion',
-          descripcion: `🔮 ${simulacion.descripcion}`,
+          descripcion: `Simulación: ${simulacion.descripcion}`,
           monto: montoSim,
           categoria: 'Simulación',
           esSimulacion: true

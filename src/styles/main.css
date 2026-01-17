@@ -464,8 +464,107 @@ select {
 }
 
 /* ============================================
-   PWA Specific
+   Mobile Responsive & PWA Specific
    ============================================ */
+
+/* Prevent horizontal overflow */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Mobile-first responsive adjustments */
+@media (max-width: 640px) {
+  /* Reduce padding on mobile */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Stack grids on mobile */
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Full width cards on mobile */
+  .md\\:grid-cols-2,
+  .md\\:grid-cols-3,
+  .lg\\:grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Smaller text on mobile */
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
+
+  /* Compact buttons */
+  button {
+    padding: 0.625rem 1rem;
+  }
+
+  /* Navigation tabs - horizontal scroll */
+  .nav-tabs {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    gap: 0.25rem;
+  }
+
+  .nav-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-tabs button {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  /* Card adjustments */
+  .glass-card {
+    border-radius: 1rem;
+  }
+
+  /* Modal full screen on mobile */
+  .modal-content {
+    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
+    margin: 1rem;
+    border-radius: 1.5rem;
+  }
+
+  /* Table scroll */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* Floating action button positioning */
+  .fab {
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+    right: 1rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 375px) {
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  h1 { font-size: 1.25rem; }
+  h2 { font-size: 1.1rem; }
+}
+
+/* PWA Standalone Mode */
 @media (display-mode: standalone) {
   body {
     -webkit-touch-callout: none;
@@ -476,6 +575,38 @@ select {
   /* Add extra padding for notch on iOS */
   .header-safe {
     padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  /* Bottom safe area for home indicator */
+  .bottom-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  /* Full height accounting for safe areas */
+  .full-height-safe {
+    min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+}
+
+/* Touch interactions */
+@media (hover: none) and (pointer: coarse) {
+  /* Larger touch targets */
+  button, a, input, select {
+    min-height: 44px;
+  }
+
+  /* Remove hover effects on touch devices */
+  .glass-card-hover:hover {
+    transform: none;
+    box-shadow: var(--glass-shadow);
+  }
+
+  /* Active states instead of hover */
+  button:active,
+  .glass-card-hover:active {
+    transform: scale(0.98);
+    opacity: 0.9;
   }
 }
 

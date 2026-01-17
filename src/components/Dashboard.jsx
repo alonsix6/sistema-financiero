@@ -6,12 +6,12 @@
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import {
   CreditCard, Wallet, TrendingUp, TrendingDown, Target, RefreshCw,
-  Plus, Trash2, ChevronLeft, ChevronRight, Calendar, Clock, AlertTriangle,
+  Plus, Minus, Trash2, ChevronLeft, ChevronRight, Calendar, Clock, AlertTriangle,
   CheckCircle, DollarSign, PieChart, BarChart3, ArrowUpRight, ArrowDownRight,
   FileText, Settings, Moon, Sun, Home, Receipt, Repeat, LineChart, Briefcase,
   AlertCircle, Info, Landmark, ShoppingCart, Car, Utensils, Gamepad2, Shirt,
   Pill, GraduationCap, Gift, Lightbulb, Smartphone, Building2, Banknote, Coins,
-  CircleDollarSign, HandCoins, Percent
+  CircleDollarSign, HandCoins, Percent, Sparkles, Activity, LogOut
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { CATEGORIAS, TIPOS_INGRESO, BANCOS, CATEGORIAS_METAS } from '../utils/constants.js';
@@ -142,7 +142,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
       const yaNotificado = sessionStorage.getItem('cuotas_notificadas');
 
       if (!yaNotificado) {
-        const mensaje = `📅 Tienes ${cuotasProximas.length} cuota(s) próxima(s) en los próximos 7 días:\n\n` +
+        const mensaje = `Tienes ${cuotasProximas.length} cuota(s) próxima(s) en los próximos 7 días:\n\n` +
           cuotasProximas.slice(0, 3).map(c =>
             `• ${c.descripcion} - S/ ${c.monto.toFixed(2)} (${c.fecha.toLocaleDateString('es-PE')})`
           ).join('\n') +
@@ -643,7 +643,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
               }`}
             >
-              {darkMode ? '☀️' : '🌙'}
+              {darkMode ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-gray-600" />}
             </button>
             <button
               onClick={() => confirm('¿Cerrar sesión?') && window.location.reload()}
@@ -657,20 +657,33 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
       {/* Navigation Tabs */}
       <div className={`${cardClass} border-b sticky top-16 z-30 transition-colors`}>
-        <div className="max-w-7xl mx-auto px-4 flex gap-1 overflow-x-auto">
-          {['inicio', 'tarjetas', 'transacciones', 'cuotas', 'inversiones', 'metas', 'proyección', 'recurrencias'].map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-6 py-4 font-medium capitalize whitespace-nowrap ${
-                activeTab === tab
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : textSecondaryClass
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 nav-tabs flex gap-1 overflow-x-auto scrollbar-hide">
+          {[
+            { id: 'inicio', label: 'Inicio', icon: Home },
+            { id: 'tarjetas', label: 'Tarjetas', icon: CreditCard },
+            { id: 'transacciones', label: 'Movimientos', icon: Receipt },
+            { id: 'cuotas', label: 'Cuotas', icon: Calendar },
+            { id: 'inversiones', label: 'Inversiones', icon: TrendingUp },
+            { id: 'metas', label: 'Metas', icon: Target },
+            { id: 'proyección', label: 'Proyección', icon: LineChart },
+            { id: 'recurrencias', label: 'Recurrencias', icon: Repeat }
+          ].map(tab => {
+            const IconComponent = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 sm:px-6 py-3 sm:py-4 font-medium whitespace-nowrap flex items-center gap-2 transition-colors ${
+                  activeTab === tab.id
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : textSecondaryClass
+                }`}
+              >
+                <IconComponent size={18} />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -681,7 +694,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
           <div className="space-y-8">
             {/* Filtro de Período */}
             <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
-              <h3 className={`text-lg font-bold mb-4 ${textClass}`}>📅 Filtrar Período</h3>
+              <h3 className={`text-lg font-bold mb-4 ${textClass}`}>Filtrar Período</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${textSecondaryClass}`}>Fecha Inicio</label>
@@ -720,7 +733,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
             {/* Resumen del Período */}
             <div>
-              <h2 className={`text-lg font-bold mb-4 ${textClass}`}>💼 Resumen del Período Seleccionado</h2>
+              <h2 className={`text-lg font-bold mb-4 ${textClass}`}>Resumen del Período Seleccionado</h2>
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
                 <div className={`${cardClass} rounded-2xl shadow-lg p-6 card-hover`}>
                   <p className={`text-sm mb-2 ${textSecondaryClass}`}>Ingresos</p>
@@ -757,7 +770,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
             {/* Cashflow Total */}
             <div>
-              <h2 className={`text-lg font-bold mb-4 ${textClass}`}>🦋 Cashflow Total (Todo el Histórico)</h2>
+              <h2 className={`text-lg font-bold mb-4 ${textClass}`}>Cashflow Total (Todo el Histórico)</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
                   <p className="text-sm opacity-80 mb-1">Total Ingresos</p>
@@ -782,7 +795,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
             {/* Próximos Pagos */}
             {proximosPagos.length > 0 && (
               <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
-                <h2 className={`text-xl font-bold mb-4 ${textClass}`}>📅 Próximos Pagos de Tarjetas</h2>
+                <h2 className={`text-xl font-bold mb-4 ${textClass}`}>Próximos Pagos de Tarjetas</h2>
                 <div className="space-y-3">
                   {proximosPagos.map((pago, idx) => (
                     <div
@@ -947,7 +960,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                         )}
 
                         <div className="flex justify-between text-sm pt-2 border-t border-white/20">
-                          <span>📅 Cierre: día {tarjeta.fechaCierre}</span>
+                          <span>Cierre: día {tarjeta.fechaCierre}</span>
                           <span>Tarjeta: Pago: día {tarjeta.fechaPago}</span>
                         </div>
                       </div>
@@ -1291,7 +1304,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
         {activeTab === 'proyección' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className={`text-2xl font-bold ${textClass}`}>🔮 Proyección Financiera (6 meses)</h2>
+              <h2 className={`text-2xl font-bold ${textClass}`}>Proyección Financiera (6 meses)</h2>
               <button
                 onClick={() => {
                   setModalSimulador(true);
@@ -1300,7 +1313,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 }}
                 className="px-6 py-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600"
               >
-                🔮 Simular Movimiento
+                Simular Movimiento
               </button>
             </div>
 
@@ -1342,7 +1355,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                           {e.esCuota && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold">Tarjeta: Cuota</span>}
                         </div>
                         <p className="text-sm text-gray-600 mt-1">
-                          📅 {e.fecha.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                          <Calendar size={14} className="inline" />  {e.fecha.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">{e.categoria}{e.tarjeta && ` • ${e.tarjeta}`}</p>
                       </div>
@@ -1543,7 +1556,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                           {!progreso.alcanzada && tiempoEstimado && !tiempoEstimado.alcanzada && tiempoEstimado.meses !== Infinity && (
                             <div className="mt-2 p-2 bg-white/10 rounded-lg">
                               <p className="text-xs opacity-90">
-                                📅 Con tu cashflow actual: <strong>{tiempoEstimado.meses} mes(es)</strong>
+                                <Calendar size={14} className="inline" />  Con tu cashflow actual: <strong>{tiempoEstimado.meses} mes(es)</strong>
                                 {tiempoEstimado.anios > 0 && ` (${tiempoEstimado.anios} año(s), ${tiempoEstimado.mesesRestantes} mes(es))`}
                               </p>
                             </div>
@@ -1647,7 +1660,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
               {(!userData.recurrencias || userData.recurrencias.length === 0) ? (
                 <div className="text-center py-12">
-                  <span className="text-6xl block mb-4">📅</span>
+                  <Calendar size={64} className="mx-auto mb-4 text-gray-400" />
                   <h3 className={`text-xl font-bold mb-2 ${textClass}`}>Sin recurrencias configuradas</h3>
                   <p className={`mb-6 ${textSecondaryClass}`}>Agrega salarios, suscripciones y otros pagos automáticos</p>
                   <button
@@ -1743,7 +1756,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
         </Suspense>
       </Modal>
 
-      <Modal isOpen={modalSimulador} onClose={() => { setModalSimulador(false); setSimulacionActual(null); setProyeccionSimulada(null); }} title="🔮 Simulador de Movimientos" size="lg">
+      <Modal isOpen={modalSimulador} onClose={() => { setModalSimulador(false); setSimulacionActual(null); setProyeccionSimulada(null); }} title="Simulador de Movimientos" size="lg">
         <Suspense fallback={<LoadingSpinner />}>
           <SimuladorMovimiento proyeccion={proyeccionSimulada} tarjetas={userData.tarjetas} onSimular={handleSimular} onCerrar={() => { setModalSimulador(false); setSimulacionActual(null); setProyeccionSimulada(null); }} />
         </Suspense>
@@ -1838,16 +1851,17 @@ const Dashboard = ({ userData, onUpdateData }) => {
       </Modal>
 
       {/* Botones Flotantes Móviles */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-3 lg:hidden z-30">
+      <div className="fixed bottom-6 right-6 flex flex-col gap-3 lg:hidden z-30 safe-area-inset-bottom">
         <button
           onClick={() => {
             setTipoTransaccion('Gasto');
             setTransaccionEditar(null);
             setModalTransaccion(true);
           }}
-          className="w-14 h-14 bg-red-500 text-white rounded-full shadow-xl"
+          className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform"
+          aria-label="Registrar gasto"
         >
-          ➖
+          <Minus size={24} />
         </button>
         <button
           onClick={() => {
@@ -1855,7 +1869,8 @@ const Dashboard = ({ userData, onUpdateData }) => {
             setTransaccionEditar(null);
             setModalTransaccion(true);
           }}
-          className="w-14 h-14 bg-green-500 text-white rounded-full shadow-xl"
+          className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform"
+          aria-label="Registrar ingreso"
         >
           <Plus size={24} />
         </button>
