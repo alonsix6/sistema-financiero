@@ -3,6 +3,7 @@
  */
 
 import React, { useState } from 'react';
+import * as Icons from 'lucide-react';
 import { CATEGORIAS, TIPOS_INGRESO } from '../../utils/constants.js';
 import Calculations from '../../utils/calculations.js';
 
@@ -100,23 +101,33 @@ const FormularioTransaccion = ({ tipo, tarjetas, onSave, onClose, transaccionEdi
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          {tipo === 'Gasto' ? 'Categoría' : 'Tipo'} *
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          {tipo === 'Gasto' ? 'Categoria' : 'Tipo'} *
         </label>
-        <div className="grid grid-cols-3 gap-3">
-          {(tipo === 'Gasto' ? CATEGORIAS : TIPOS_INGRESO).map((cat) => (
-            <button
-              key={cat.valor}
-              type="button"
-              onClick={() => setFormData({ ...formData, categoria: cat.valor })}
-              className={`p-4 rounded-xl border-2 ${
-                formData.categoria === cat.valor ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-              }`}
-            >
-              <span className="text-3xl block">{cat.icono}</span>
-              <span className="text-xs">{cat.valor}</span>
-            </button>
-          ))}
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+          {(tipo === 'Gasto' ? CATEGORIAS : TIPOS_INGRESO).map((cat) => {
+            const IconComponent = Icons[cat.iconName] || Icons.MoreHorizontal;
+            return (
+              <button
+                key={cat.valor}
+                type="button"
+                onClick={() => setFormData({ ...formData, categoria: cat.valor })}
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  formData.categoria === cat.valor
+                    ? 'border-accent bg-accent/10 shadow-md'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                <div
+                  className="w-10 h-10 mx-auto mb-2 rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: `${cat.color}20` }}
+                >
+                  <IconComponent size={20} style={{ color: cat.color }} />
+                </div>
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{cat.valor}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -134,29 +145,32 @@ const FormularioTransaccion = ({ tipo, tarjetas, onSave, onClose, transaccionEdi
       {tipo === 'Gasto' && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Método de Pago *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Metodo de Pago *</label>
             <select
               value={formData.metodoPago}
               onChange={(e) => setFormData({ ...formData, metodoPago: e.target.value, pagarEnCuotas: false })}
-              className="w-full px-4 py-3 border rounded-xl"
+              className="input-glass"
             >
-              <option value="Efectivo">💵 Efectivo</option>
+              <option value="Efectivo">Efectivo</option>
               {tarjetas.map(t => (
-                <option key={t.id} value={t.id}>💳 {t.nombre}</option>
+                <option key={t.id} value={t.id}>{t.nombre}</option>
               ))}
             </select>
           </div>
 
           {formData.metodoPago !== 'Efectivo' && !transaccionEditar && (
-            <div className="border-t pt-4">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.pagarEnCuotas}
                   onChange={(e) => setFormData({ ...formData, pagarEnCuotas: e.target.checked })}
-                  className="w-5 h-5 text-blue-600"
+                  className="w-5 h-5 text-accent rounded"
                 />
-                <span className="text-sm font-medium text-gray-700">💳 Pagar en cuotas</span>
+                <div className="flex items-center gap-2">
+                  <Icons.Calendar size={18} className="text-accent" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Pagar en cuotas</span>
+                </div>
               </label>
 
               {formData.pagarEnCuotas && (
@@ -166,16 +180,26 @@ const FormularioTransaccion = ({ tipo, tarjetas, onSave, onClose, transaccionEdi
                       type="checkbox"
                       checked={formData.tieneIntereses}
                       onChange={(e) => setFormData({ ...formData, tieneIntereses: e.target.checked })}
-                      className="w-4 h-4 text-amber-600"
+                      className="w-4 h-4 text-amber-600 rounded"
                     />
-                    <span className="text-sm">
-                      {formData.tieneIntereses ? '📈 Con intereses (TEA)' : '✨ Sin intereses'}
+                    <span className="text-sm flex items-center gap-2">
+                      {formData.tieneIntereses ? (
+                        <>
+                          <Icons.TrendingUp size={16} className="text-amber-600" />
+                          Con intereses (TEA)
+                        </>
+                      ) : (
+                        <>
+                          <Icons.Sparkles size={16} className="text-green-600" />
+                          Sin intereses
+                        </>
+                      )}
                     </span>
                   </label>
 
                   {formData.tieneIntereses && (
-                    <div className="mt-3 ml-8 bg-amber-50 p-4 rounded-xl border border-amber-200">
-                      <label className="block text-sm font-semibold mb-2 text-amber-900">
+                    <div className="mt-3 ml-8 bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-200 dark:border-amber-800">
+                      <label className="block text-sm font-semibold mb-2 text-amber-900 dark:text-amber-200">
                         Tasa Efectiva Anual (TEA)
                       </label>
                       <div className="flex items-center gap-2">
@@ -186,12 +210,13 @@ const FormularioTransaccion = ({ tipo, tarjetas, onSave, onClose, transaccionEdi
                           step="0.1"
                           value={formData.tea}
                           onChange={(e) => setFormData({ ...formData, tea: parseFloat(e.target.value) || 0 })}
-                          className="w-24 px-3 py-2 border-2 border-amber-300 rounded-lg text-lg font-bold focus:border-amber-500"
+                          className="w-24 px-3 py-2 border-2 border-amber-300 dark:border-amber-700 rounded-lg text-lg font-bold focus:border-amber-500 bg-white dark:bg-gray-800"
                         />
-                        <span className="text-sm font-bold text-amber-900">%</span>
+                        <span className="text-sm font-bold text-amber-900 dark:text-amber-200">%</span>
                       </div>
-                      <p className="text-xs text-amber-700 mt-2">
-                        ℹ️ TEA típica en Perú: 40-90% para tarjetas de crédito
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-2 flex items-center gap-1">
+                        <Icons.Info size={12} />
+                        TEA tipica en Peru: 40-90% para tarjetas de credito
                       </p>
                     </div>
                   )}
@@ -199,9 +224,9 @@ const FormularioTransaccion = ({ tipo, tarjetas, onSave, onClose, transaccionEdi
               )}
 
               {formData.pagarEnCuotas && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-xl space-y-4">
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Número de cuotas:</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Numero de cuotas:</label>
                     <div className="grid grid-cols-4 gap-2">
                       {opcionesCuotas.map(n => (
                         <button
@@ -210,8 +235,8 @@ const FormularioTransaccion = ({ tipo, tarjetas, onSave, onClose, transaccionEdi
                           onClick={() => setFormData({ ...formData, numeroCuotas: n })}
                           className={`py-2.5 rounded-lg font-semibold transition-all ${
                             formData.numeroCuotas === n
-                              ? 'bg-blue-500 text-white shadow-md'
-                              : 'bg-white text-gray-700 hover:bg-gray-50'
+                              ? 'bg-accent text-white shadow-md'
+                              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                           }`}
                         >
                           {n}x
@@ -236,52 +261,77 @@ const FormularioTransaccion = ({ tipo, tarjetas, onSave, onClose, transaccionEdi
                     }
 
                     return (
-                      <div className="p-4 bg-white rounded-lg border border-blue-200">
-                        <p className="text-sm font-bold text-gray-800 mb-3">📊 Vista Previa de Cuotas:</p>
+                      <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-blue-200 dark:border-blue-800">
+                        <p className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+                          <Icons.BarChart3 size={16} className="text-accent" />
+                          Vista Previa de Cuotas
+                        </p>
                         <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">💳 Cuota mensual:</span>
-                            <span className="font-bold text-gray-900">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                              <Icons.CreditCard size={14} />
+                              Cuota mensual
+                            </span>
+                            <span className="font-bold text-gray-900 dark:text-white">
                               S/ {cuotasData.montoPorCuota.toFixed(2)}
                             </span>
                           </div>
 
                           {formData.tieneIntereses && (
                             <>
-                              <div className="flex justify-between text-amber-700">
-                                <span>📈 Total con intereses:</span>
+                              <div className="flex justify-between items-center text-amber-700 dark:text-amber-400">
+                                <span className="flex items-center gap-2">
+                                  <Icons.TrendingUp size={14} />
+                                  Total con intereses
+                                </span>
                                 <span className="font-bold">S/ {cuotasData.montoTotal.toFixed(2)}</span>
                               </div>
-                              <div className="flex justify-between text-amber-700">
-                                <span>💰 Intereses totales:</span>
+                              <div className="flex justify-between items-center text-amber-700 dark:text-amber-400">
+                                <span className="flex items-center gap-2">
+                                  <Icons.Coins size={14} />
+                                  Intereses totales
+                                </span>
                                 <span className="font-bold">S/ {cuotasData.interesTotal.toFixed(2)}</span>
                               </div>
-                              <div className="flex justify-between text-amber-700">
-                                <span>📊 TEA aplicada:</span>
+                              <div className="flex justify-between items-center text-amber-700 dark:text-amber-400">
+                                <span className="flex items-center gap-2">
+                                  <Icons.Percent size={14} />
+                                  TEA aplicada
+                                </span>
                                 <span className="font-bold">{formData.tea.toFixed(1)}%</span>
                               </div>
                             </>
                           )}
 
                           {!formData.tieneIntereses && (
-                            <div className="flex justify-between text-green-700">
-                              <span>✨ Total a pagar:</span>
+                            <div className="flex justify-between items-center text-green-700 dark:text-green-400">
+                              <span className="flex items-center gap-2">
+                                <Icons.Sparkles size={14} />
+                                Total a pagar
+                              </span>
                               <span className="font-bold">S/ {cuotasData.montoTotal.toFixed(2)}</span>
                             </div>
                           )}
 
-                          <div className="flex justify-between pt-2 border-t">
-                            <span className="text-gray-600">📅 Primera cuota:</span>
-                            <span className="font-semibold text-blue-600">{calcularPrimeraCuota()}</span>
+                          <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
+                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                              <Icons.CalendarCheck size={14} />
+                              Primera cuota
+                            </span>
+                            <span className="font-semibold text-accent">{calcularPrimeraCuota()}</span>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">📅 Última cuota:</span>
-                            <span className="font-semibold text-blue-600">{calcularUltimaCuota()}</span>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                              <Icons.CalendarX size={14} />
+                              Ultima cuota
+                            </span>
+                            <span className="font-semibold text-accent">{calcularUltimaCuota()}</span>
                           </div>
                         </div>
-                        <div className={`mt-3 p-2 rounded border ${formData.tieneIntereses ? 'bg-amber-50 border-amber-200' : 'bg-yellow-50 border-yellow-200'}`}>
-                          <p className={`text-xs ${formData.tieneIntereses ? 'text-amber-800' : 'text-yellow-800'}`}>
-                            ⚠️ Se bloqueará {formData.tieneIntereses ? `S/ ${cuotasData.montoTotal.toFixed(2)}` : `S/ ${monto.toFixed(2)}`} de tu línea de crédito
+                        <div className={`mt-3 p-3 rounded-lg border flex items-start gap-2 ${formData.tieneIntereses ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'}`}>
+                          <Icons.AlertTriangle size={16} className={formData.tieneIntereses ? 'text-amber-600 flex-shrink-0 mt-0.5' : 'text-yellow-600 flex-shrink-0 mt-0.5'} />
+                          <p className={`text-xs ${formData.tieneIntereses ? 'text-amber-800 dark:text-amber-300' : 'text-yellow-800 dark:text-yellow-300'}`}>
+                            Se bloqueara {formData.tieneIntereses ? `S/ ${cuotasData.montoTotal.toFixed(2)}` : `S/ ${monto.toFixed(2)}`} de tu linea de credito
                           </p>
                         </div>
                       </div>
@@ -305,11 +355,20 @@ const FormularioTransaccion = ({ tipo, tarjetas, onSave, onClose, transaccionEdi
         />
       </div>
 
-      <div className="flex gap-3">
-        <button type="button" onClick={onClose} className="flex-1 px-6 py-3 border rounded-xl">
+      <div className="flex gap-3 pt-4">
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex-1 px-6 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+        >
+          <Icons.X size={18} />
           Cancelar
         </button>
-        <button type="submit" className="flex-1 px-6 py-3 bg-green-500 text-white rounded-xl">
+        <button
+          type="submit"
+          className="flex-1 px-6 py-3 bg-gradient-to-r from-accent to-accent-light text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
+        >
+          <Icons.Check size={18} />
           {transaccionEditar ? 'Actualizar' : 'Registrar'}
         </button>
       </div>
