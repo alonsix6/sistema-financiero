@@ -4,6 +4,7 @@
  */
 
 import React, { useMemo } from 'react';
+import * as Icons from 'lucide-react';
 
 const SeccionCuotas = ({ transacciones, tarjetas, efectivoDisponible, onPagarCuotas }) => {
 
@@ -157,7 +158,7 @@ const SeccionCuotas = ({ transacciones, tarjetas, efectivoDisponible, onPagarCuo
   if (!resumenCuotas) {
     return (
       <div className="bg-white p-8 rounded-lg shadow text-center">
-        <div className="text-6xl mb-4">💳</div>
+        <div className="text-gray-300 mb-4"><Icons.CreditCard size={64} /></div>
         <p className="text-gray-500 text-lg">No tienes compras en cuotas activas</p>
         <p className="text-gray-400 text-sm mt-2">Las compras que hagas en cuotas aparecerán aquí</p>
       </div>
@@ -169,12 +170,12 @@ const SeccionCuotas = ({ transacciones, tarjetas, efectivoDisponible, onPagarCuo
       {/* Resumen General */}
       <div className="bg-gradient-to-r from-purple-500 to-purple-700 text-white p-6 rounded-lg shadow-xl">
         <div className="flex justify-between items-start mb-4">
-          <h2 className="text-2xl font-bold">💳 Resumen de Cuotas</h2>
+          <h2 className="text-2xl font-bold">Resumen de Cuotas</h2>
           <button
             onClick={exportarCronograma}
             className="bg-white text-purple-700 px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors font-semibold text-sm"
           >
-            📥 Exportar CSV
+            Exportar CSV
           </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -195,7 +196,7 @@ const SeccionCuotas = ({ transacciones, tarjetas, efectivoDisponible, onPagarCuo
 
       {/* Por Tarjeta */}
       <div>
-        <h3 className="text-xl font-bold mb-4 text-gray-800">💳 Por Tarjeta</h3>
+        <h3 className="text-xl font-bold mb-4 text-gray-800">Por Tarjeta</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {resumenCuotas.porTarjeta.map(t => (
             <div key={t.tarjetaId} className="bg-white p-5 rounded-xl shadow-md border-l-4 border-purple-500 hover:shadow-lg transition-shadow">
@@ -230,7 +231,7 @@ const SeccionCuotas = ({ transacciones, tarjetas, efectivoDisponible, onPagarCuo
 
       {/* Próximas Cuotas (Timeline) */}
       <div>
-        <h3 className="text-xl font-bold mb-4 text-gray-800">📅 Próximas Cuotas (6 meses)</h3>
+        <h3 className="text-xl font-bold mb-4 text-gray-800">Proximas Cuotas (6 meses)</h3>
         <div className="space-y-4">
           {resumenCuotas.proximasCuotas.map((mes, idx) => (
             <div key={idx} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow">
@@ -251,7 +252,7 @@ const SeccionCuotas = ({ transacciones, tarjetas, efectivoDisponible, onPagarCuo
                       <p className="text-xs text-gray-500">
                         {t.tarjeta} • Cuota {t.numeroCuota}/{t.totalCuotas}
                         {t.estado === 'parcial' && (
-                          <span className="ml-2 text-amber-600 font-semibold">⚠️ Parcial</span>
+                          <span className="ml-2 text-amber-600 font-semibold">Parcial</span>
                         )}
                       </p>
                     </div>

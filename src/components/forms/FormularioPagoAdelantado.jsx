@@ -3,6 +3,7 @@
  */
 
 import React, { useState } from 'react';
+import * as Icons from 'lucide-react';
 
 const FormularioPagoAdelantado = ({ transaccion, efectivoDisponible, onPagar, onClose }) => {
   const [montoPago, setMontoPago] = useState('');
@@ -80,7 +81,7 @@ const FormularioPagoAdelantado = ({ transaccion, efectivoDisponible, onPagar, on
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4">
-        <h4 className="font-bold text-purple-900 mb-2">💳 {transaccion.descripcion}</h4>
+        <h4 className="font-bold text-purple-900 mb-2">{transaccion.descripcion}</h4>
         <p className="text-sm text-purple-700">{cuotasRestantes} cuotas restantes de {transaccion.cuotasInfo.numeroCuotas}</p>
       </div>
 
@@ -133,12 +134,12 @@ const FormularioPagoAdelantado = ({ transaccion, efectivoDisponible, onPagar, on
           placeholder="Ingresa el monto"
           className="w-full px-4 py-3 border-2 border-purple-300 rounded-xl text-xl font-bold focus:border-purple-500"
         />
-        <p className="text-xs text-gray-500 mt-1">💡 Cuota: S/ {montoCuota.toFixed(2)} {tipoPago === 'parcial' && '(Se aceptan montos parciales)'}</p>
+        <p className="text-xs text-gray-500 mt-1">Cuota: S/ {montoCuota.toFixed(2)} {tipoPago === 'parcial' && '(Se aceptan montos parciales)'}</p>
       </div>
 
       {tipoPago === 'parcial' && montoParcial > 0 && (
         <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4">
-          <p className="text-sm font-bold text-amber-900 mb-2">💡 Pago Parcial Detectado</p>
+          <p className="text-sm font-bold text-amber-900 mb-2">Pago Parcial Detectado</p>
           <div className="text-xs space-y-1 text-amber-700">
             <div>• Cuotas completas: {cuotasQueSePagaran} × S/ {montoCuota.toFixed(2)} = S/ {(cuotasQueSePagaran * montoCuota).toFixed(2)}</div>
             <div>• Abono parcial a siguiente cuota: S/ {montoParcial.toFixed(2)}</div>
@@ -149,7 +150,7 @@ const FormularioPagoAdelantado = ({ transaccion, efectivoDisponible, onPagar, on
 
       {montoPago && cuotasQueSePagaran > 0 && (
         <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4">
-          <p className="text-sm font-bold text-green-900 mb-3">📊 Resultado del Pago:</p>
+          <p className="text-sm font-bold text-green-900 mb-3">Resultado del Pago:</p>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-green-800">Cuotas que se pagarán:</span>
@@ -177,13 +178,13 @@ const FormularioPagoAdelantado = ({ transaccion, efectivoDisponible, onPagar, on
 
       {montoPago && cuotasQueSePagaran <= 0 && parseFloat(montoPago) > 0 && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-          <p className="text-sm text-yellow-800">⚠️ El monto no alcanza para pagar una cuota completa (S/ {montoCuota.toFixed(2)})</p>
+          <p className="text-sm text-yellow-800">El monto no alcanza para pagar una cuota completa (S/ {montoCuota.toFixed(2)})</p>
         </div>
       )}
 
       {montoRealAPagar > efectivoDisponible && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-          <p className="text-sm text-red-800">❌ No tienes suficiente efectivo. Te faltan S/ {(montoRealAPagar - efectivoDisponible).toFixed(2)}</p>
+          <p className="text-sm text-red-800">No tienes suficiente efectivo. Te faltan S/ {(montoRealAPagar - efectivoDisponible).toFixed(2)}</p>
         </div>
       )}
 
@@ -197,7 +198,7 @@ const FormularioPagoAdelantado = ({ transaccion, efectivoDisponible, onPagar, on
           disabled={!montoPago || cuotasQueSePagaran <= 0 || montoRealAPagar > efectivoDisponible}
           className="flex-1 px-6 py-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
-          💳 Confirmar Pago Adelantado
+          <Icons.FastForward size={18} className="inline mr-2" />Confirmar Pago Adelantado
         </button>
       </div>
     </div>

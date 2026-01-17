@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import * as Icons from 'lucide-react';
 
 const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice, onSave, onClose }) => {
   const [inputMode, setInputMode] = useState('amount'); // 'amount' o 'shares'
@@ -117,7 +118,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
         <div className="flex items-center gap-3 mb-2">
-          <span className="text-2xl">💰</span>
+          <Icons.TrendingUp size={24} className="text-blue-600" />
           <div>
             <h3 className="font-bold text-gray-800">{stockSymbol}</h3>
             <p className="text-sm text-gray-600">{stockName}</p>
@@ -125,7 +126,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
         </div>
         {currentPrice && (
           <p className="text-sm text-gray-700 mt-2">
-            📊 Precio actual: <span className="font-bold">${currentPrice.toFixed(2)}</span>
+            Precio actual: <span className="font-bold">${currentPrice.toFixed(2)}</span>
           </p>
         )}
       </div>
@@ -145,7 +146,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
                 : 'border-gray-300 hover:border-gray-400'
             }`}
           >
-            💵 Por Monto (USD)
+            Por Monto (USD)
           </button>
           <button
             type="button"
@@ -156,7 +157,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
                 : 'border-gray-300 hover:border-gray-400'
             }`}
           >
-            📊 Por Acciones
+            Por Acciones
           </button>
         </div>
       </div>
@@ -181,7 +182,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
             />
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            💡 Ingresa el monto en dólares que quieres invertir
+            Ingresa el monto en dólares que quieres invertir
           </p>
         </div>
       ) : (
@@ -205,7 +206,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
             <p className="text-red-600 text-sm mt-1">{errors.shares}</p>
           )}
           <p className="text-xs text-gray-500 mt-1">
-            💡 Puedes ingresar fracciones de acciones (ej: 0.166667)
+            Puedes ingresar fracciones de acciones (ej: 0.166667)
           </p>
         </div>
       )}
@@ -239,7 +240,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
       {inputMode === 'amount' && formData.shares && (
         <div className="bg-green-50 border border-green-200 rounded-xl p-4">
           <p className="text-sm text-green-800 mb-1">
-            📊 Acciones que comprarás:
+            Acciones que compraras:
           </p>
           <p className="text-2xl font-bold text-green-900">
             {parseFloat(formData.shares).toFixed(6)} acciones

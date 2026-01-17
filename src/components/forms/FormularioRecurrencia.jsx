@@ -3,6 +3,7 @@
  */
 
 import React, { useState } from 'react';
+import * as Icons from 'lucide-react';
 import { CATEGORIAS } from '../../utils/constants.js';
 
 const FormularioRecurrencia = ({ recurrencia, tarjetas, onSave, onClose, onDelete }) => {
@@ -36,8 +37,8 @@ const FormularioRecurrencia = ({ recurrencia, tarjetas, onSave, onClose, onDelet
             onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
             className="w-full px-4 py-3 border rounded-xl"
           >
-            <option value="ingreso">💰 Ingreso</option>
-            <option value="gasto">💸 Gasto</option>
+            <option value="ingreso">Ingreso</option>
+            <option value="gasto">Gasto</option>
           </select>
         </div>
         <div>
@@ -88,7 +89,7 @@ const FormularioRecurrencia = ({ recurrencia, tarjetas, onSave, onClose, onDelet
               className="w-full px-4 py-3 border rounded-xl"
             >
               {CATEGORIAS.map(c => (
-                <option key={c.valor} value={c.valor}>{c.icono} {c.valor}</option>
+                <option key={c.valor} value={c.valor}>{c.valor}</option>
               ))}
             </select>
           </div>
@@ -99,9 +100,9 @@ const FormularioRecurrencia = ({ recurrencia, tarjetas, onSave, onClose, onDelet
               onChange={(e) => setFormData({ ...formData, tarjetaId: e.target.value })}
               className="w-full px-4 py-3 border rounded-xl"
             >
-              <option value="Efectivo">💵 Efectivo</option>
+              <option value="Efectivo">Efectivo</option>
               {tarjetas.map(t => (
-                <option key={t.id} value={t.id}>💳 {t.nombre}</option>
+                <option key={t.id} value={t.id}>Tarjeta: {t.nombre}</option>
               ))}
             </select>
           </div>
@@ -130,7 +131,7 @@ const FormularioRecurrencia = ({ recurrencia, tarjetas, onSave, onClose, onDelet
             }}
             className="w-full px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 font-medium"
           >
-            🗑️ Eliminar Recurrencia
+            <Icons.Trash2 size={18} className="inline mr-2" />Eliminar Recurrencia
           </button>
         </div>
       )}

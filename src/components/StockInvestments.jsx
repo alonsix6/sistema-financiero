@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import { TrendingUp, TrendingDown, Briefcase, Star, Flame, Plus, RefreshCw, ChevronUp, ChevronDown, BarChart3, PieChart, AlertTriangle, CheckCircle, XCircle, Info, Trash2, LineChart, DollarSign, Target, AlertCircle, ArrowUpRight, ArrowDownRight, Clock, Zap } from 'lucide-react';
 import FinnhubService from '../utils/finnhubService.js';
 import Modal from './Modal.jsx';
 import StockChart from './StockChart.jsx';
@@ -228,35 +229,35 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
     if (profitLossPercent >= 20) {
       recommendations.push({
         type: 'success',
-        icon: '🎉',
+        IconComponent: TrendingUp,
         title: 'Excelente rendimiento',
         message: `Ganancia del ${profitLossPercent.toFixed(2)}%. Considera tomar ganancias parciales o dejar correr la inversión.`,
       });
     } else if (profitLossPercent >= 10) {
       recommendations.push({
         type: 'good',
-        icon: '✅',
+        IconComponent: CheckCircle,
         title: 'Buen rendimiento',
         message: `Ganancia del ${profitLossPercent.toFixed(2)}%. Tu inversión va por buen camino.`,
       });
     } else if (profitLossPercent >= -5) {
       recommendations.push({
         type: 'neutral',
-        icon: '➡️',
+        IconComponent: ArrowUpRight,
         title: 'Rendimiento estable',
         message: `${profitLossPercent >= 0 ? 'Ganancia' : 'Pérdida'} del ${Math.abs(profitLossPercent).toFixed(2)}%. Mantén el curso.`,
       });
     } else if (profitLossPercent >= -15) {
       recommendations.push({
         type: 'warning',
-        icon: '⚠️',
+        IconComponent: AlertTriangle,
         title: 'Pérdida moderada',
         message: `Pérdida del ${Math.abs(profitLossPercent).toFixed(2)}%. Considera esperar recuperación o promediar hacia abajo si confías en el activo.`,
       });
     } else {
       recommendations.push({
         type: 'danger',
-        icon: '🚨',
+        IconComponent: AlertCircle,
         title: 'Pérdida significativa',
         message: `Pérdida del ${Math.abs(profitLossPercent).toFixed(2)}%. Evalúa tu estrategia. ¿Sigue siendo una inversión sólida?`,
       });
@@ -268,14 +269,14 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
       if (upside > 20) {
         recommendations.push({
           type: 'buy',
-          icon: '💚',
+          IconComponent: Target,
           title: 'Oportunidad de compra',
           message: `Analistas proyectan ${upside.toFixed(1)}% de subida potencial. Podría ser buen momento para aumentar posición.`,
         });
       } else if (upside < -10) {
         recommendations.push({
           type: 'sell',
-          icon: '🔴',
+          IconComponent: XCircle,
           title: 'Considera vender',
           message: `El precio está ${Math.abs(upside).toFixed(1)}% por encima del precio objetivo. Considera tomar ganancias.`,
         });
@@ -288,7 +289,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
       if (dailyChange > 5) {
         recommendations.push({
           type: 'alert',
-          icon: '📊',
+          IconComponent: BarChart3,
           title: 'Alta volatilidad',
           message: `Movimiento diario del ${dailyChange.toFixed(2)}%. Mantente atento a las noticias del mercado.`,
         });
@@ -460,7 +461,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
           <div className={`p-4 ${metrics.profitLoss >= 0 ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-red-500 to-red-600'} text-white`}>
             <div className="flex justify-between items-start mb-2">
               <div>
-                <p className="text-xs opacity-90">💼 Tu Inversión</p>
+                <p className="text-xs opacity-90 flex items-center gap-1"><Briefcase size={12} /> Tu Inversión</p>
                 <p className="text-2xl font-bold">${metrics.currentValue.toFixed(2)}</p>
               </div>
               <div className="text-right">
@@ -497,7 +498,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
               <div>
                 <h3 className={`text-lg font-bold ${textClass}`}>{symbol}</h3>
                 <p className={`text-xs ${textSecondaryClass}`}>
-                  {type === 'etf' ? '📊 ETF' : '📈 Stock'} • {profile?.name || name || symbol}
+                  {type === 'etf' ? 'ETF' : 'Stock'} • {profile?.name || name || symbol}
                 </p>
               </div>
               {data?.lastUpdate && (
@@ -530,37 +531,49 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
               {/* Recomendaciones inteligentes */}
               {recommendations && recommendations.length > 0 && (
                 <div className="mb-4 space-y-2">
-                  {recommendations.map((rec, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-3 rounded-lg border-2 ${
-                        rec.type === 'success' ? 'bg-green-50 border-green-200' :
-                        rec.type === 'good' ? 'bg-blue-50 border-blue-200' :
-                        rec.type === 'neutral' ? 'bg-gray-50 border-gray-200' :
-                        rec.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
-                        rec.type === 'danger' ? 'bg-red-50 border-red-200' :
-                        rec.type === 'buy' ? 'bg-green-50 border-green-300' :
-                        rec.type === 'sell' ? 'bg-red-50 border-red-300' :
-                        'bg-blue-50 border-blue-200'
-                      }`}
-                    >
-                      <div className="flex items-start gap-2">
-                        <span className="text-xl">{rec.icon}</span>
-                        <div className="flex-1">
-                          <p className="text-sm font-bold text-gray-800">{rec.title}</p>
-                          <p className="text-xs text-gray-600 mt-1">{rec.message}</p>
+                  {recommendations.map((rec, idx) => {
+                    const RecIcon = rec.IconComponent;
+                    return (
+                      <div
+                        key={idx}
+                        className={`p-3 rounded-lg border-2 ${
+                          rec.type === 'success' ? 'bg-green-50 border-green-200' :
+                          rec.type === 'good' ? 'bg-blue-50 border-blue-200' :
+                          rec.type === 'neutral' ? 'bg-gray-50 border-gray-200' :
+                          rec.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
+                          rec.type === 'danger' ? 'bg-red-50 border-red-200' :
+                          rec.type === 'buy' ? 'bg-green-50 border-green-300' :
+                          rec.type === 'sell' ? 'bg-red-50 border-red-300' :
+                          'bg-blue-50 border-blue-200'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <RecIcon size={20} className={
+                            rec.type === 'success' ? 'text-green-600' :
+                            rec.type === 'good' ? 'text-blue-600' :
+                            rec.type === 'neutral' ? 'text-gray-600' :
+                            rec.type === 'warning' ? 'text-yellow-600' :
+                            rec.type === 'danger' ? 'text-red-600' :
+                            rec.type === 'buy' ? 'text-green-600' :
+                            rec.type === 'sell' ? 'text-red-600' :
+                            'text-blue-600'
+                          } />
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-gray-800">{rec.title}</p>
+                            <p className="text-xs text-gray-600 mt-1">{rec.message}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
               {/* Historial de inversiones */}
               {metrics && metrics.investments.length > 0 && (
                 <div className={`mb-4 p-3 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg`}>
-                  <p className={`text-xs font-semibold ${textSecondaryClass} mb-2`}>
-                    📋 Historial de Compras ({metrics.investments.length})
+                  <p className={`text-xs font-semibold ${textSecondaryClass} mb-2 flex items-center gap-1`}>
+                    <Clock size={12} /> Historial de Compras ({metrics.investments.length})
                   </p>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
                     {metrics.investments.map((inv) => {
@@ -597,7 +610,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
                                 className="text-red-500 hover:text-red-700 mt-1"
                                 title="Eliminar inversión"
                               >
-                                🗑️
+                                <Trash2 size={14} />
                               </button>
                             </div>
                           </div>
@@ -613,16 +626,16 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
                 onClick={() => openDetailModal(symbol, profile?.name || name || symbol, type)}
                 className={`w-full py-3 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} ${textClass} rounded-xl font-medium mb-3 transition-colors flex items-center justify-center gap-2`}
               >
-                <span>📊</span>
+                <LineChart size={18} />
                 <span>Ver Gráfico</span>
               </button>
 
               {/* Botón para agregar inversión */}
               <button
                 onClick={() => openInvestmentModal(symbol, profile?.name || name || symbol, type, currentPrice)}
-                className="w-full py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-medium mb-3"
+                className="w-full py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-medium mb-3 flex items-center justify-center gap-2"
               >
-                {metrics ? '➕ Agregar más inversión' : '💰 Registrar Inversión'}
+                {metrics ? <><Plus size={18} /> Agregar más inversión</> : <><DollarSign size={18} /> Registrar Inversión</>}
               </button>
 
               {/* Datos adicionales */}
@@ -686,15 +699,16 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
       <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h2 className={`text-2xl font-bold ${textClass} mb-2`}>📊 Inversiones en Bolsa</h2>
+            <h2 className={`text-2xl font-bold ${textClass} mb-2 flex items-center gap-2`}><BarChart3 size={28} /> Inversiones en Bolsa</h2>
             <p className={`text-sm ${textSecondaryClass}`}>
               Monitorea tus inversiones con análisis en tiempo real
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className={`text-sm font-medium ${textSecondaryClass}`}>
-              {liveUpdates ? '🟢 Actualización activa' : '⚫ Actualización pausada'}
+            <span className={`text-sm font-medium ${textSecondaryClass} flex items-center gap-2`}>
+              <span className={`w-2 h-2 rounded-full ${liveUpdates ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></span>
+              {liveUpdates ? 'Actualización activa' : 'Actualización pausada'}
             </span>
             <button
               onClick={() => setLiveUpdates(!liveUpdates)}
@@ -714,8 +728,8 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
 
         {liveUpdates && (
           <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-            <p className="text-xs text-yellow-800">
-              ⚠️ <strong>Actualizaciones activas:</strong> Se actualiza cada 30 segundos respetando límites de API
+            <p className="text-xs text-yellow-800 flex items-center gap-2">
+              <AlertTriangle size={14} /> <strong>Actualizaciones activas:</strong> Se actualiza cada 30 segundos respetando límites de API
             </p>
           </div>
         )}
@@ -725,16 +739,16 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
       {portfolioSummary.totalInvested > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
-            <p className="text-sm opacity-80 mb-1">💼 Total Invertido</p>
+            <p className="text-sm opacity-80 mb-1 flex items-center gap-1"><Briefcase size={14} /> Total Invertido</p>
             <p className="text-3xl font-bold">${portfolioSummary.totalInvested.toFixed(2)}</p>
           </div>
           <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white">
-            <p className="text-sm opacity-80 mb-1">💰 Valor Actual</p>
+            <p className="text-sm opacity-80 mb-1 flex items-center gap-1"><DollarSign size={14} /> Valor Actual</p>
             <p className="text-3xl font-bold">${portfolioSummary.currentValue.toFixed(2)}</p>
           </div>
           <div className={`bg-gradient-to-br ${portfolioSummary.profitLoss >= 0 ? 'from-green-500 to-green-600' : 'from-red-500 to-red-600'} rounded-2xl shadow-lg p-6 text-white`}>
-            <p className="text-sm opacity-80 mb-1">
-              {portfolioSummary.profitLoss >= 0 ? '📈 Ganancia' : '📉 Pérdida'}
+            <p className="text-sm opacity-80 mb-1 flex items-center gap-1">
+              {portfolioSummary.profitLoss >= 0 ? <><TrendingUp size={14} /> Ganancia</> : <><TrendingDown size={14} /> Pérdida</>}
             </p>
             <p className="text-3xl font-bold">
               {portfolioSummary.profitLoss >= 0 ? '+' : ''}${portfolioSummary.profitLoss.toFixed(2)}
@@ -748,7 +762,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
 
       {/* Buscador */}
       <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
-        <h3 className={`text-lg font-bold ${textClass} mb-4`}>➕ Agregar a Favoritos</h3>
+        <h3 className={`text-lg font-bold ${textClass} mb-4 flex items-center gap-2`}><Plus size={20} /> Agregar a Favoritos</h3>
         <div className="flex flex-col md:flex-row gap-3">
           <input
             type="text"
@@ -784,7 +798,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
       {/* Sección de Favoritos */}
       {favorites.length > 0 && (
         <div>
-          <h3 className={`text-xl font-bold ${textClass} mb-4`}>⭐ Mis Inversiones</h3>
+          <h3 className={`text-xl font-bold ${textClass} mb-4 flex items-center gap-2`}><Star size={24} /> Mis Inversiones</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {favorites.map(fav => renderStockCard(fav.symbol, fav.name, fav.type, true))}
           </div>
@@ -793,7 +807,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
 
       {/* Sección TOP 10 */}
       <div>
-        <h3 className={`text-xl font-bold ${textClass} mb-4`}>🔥 TOP 10 Populares</h3>
+        <h3 className={`text-xl font-bold ${textClass} mb-4 flex items-center gap-2`}><Flame size={24} /> TOP 10 Populares</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {TOP_10_STOCKS.map(stock => renderStockCard(stock.symbol, stock.name, stock.type, false))}
         </div>
@@ -804,9 +818,9 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
         <div className="flex justify-center">
           <button
             onClick={updateAllStocks}
-            className="px-8 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-medium"
+            className="px-8 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-medium flex items-center gap-2"
           >
-            🔄 Actualizar Manualmente
+            <RefreshCw size={18} /> Actualizar Manualmente
           </button>
         </div>
       )}
@@ -815,7 +829,8 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
       <Modal
         isOpen={modalInvestment}
         onClose={() => { setModalInvestment(false); setSelectedStock(null); setInvestmentToEdit(null); }}
-        title={`💰 ${investmentToEdit ? 'Editar' : 'Registrar'} Inversión`}
+        title={`${investmentToEdit ? 'Editar' : 'Registrar'} Inversión`}
+        icon={DollarSign}
       >
         <Suspense fallback={<LoadingSpinner />}>
           {selectedStock && (
@@ -946,9 +961,9 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
                   stockData[detailStock.symbol]?.quote?.c
                 );
               }}
-              className="w-full py-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-semibold text-lg"
+              className="w-full py-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-semibold text-lg flex items-center justify-center gap-2"
             >
-              💰 Registrar Inversión
+              <DollarSign size={20} /> Registrar Inversión
             </button>
           </div>
         )}

@@ -1,12 +1,13 @@
 /**
  * Servicio de API de Finnhub con rate limiting
- * Gestiona llamadas a la API de Finnhub con control de límites
+ * Gestiona llamadas a la API de Finnhub con control de limites
  * Usa fetch nativo del browser para compatibilidad
  */
 
-const API_KEY = 'd45e1ppr01qsugt9uen0d45e1ppr01qsugt9ueng';
+// Use environment variable or fallback to demo key
+const API_KEY = import.meta.env.VITE_FINNHUB_API_KEY || 'demo';
 const BASE_URL = 'https://finnhub.io/api/v1';
-const MAX_CALLS_PER_SECOND = 25; // Límite seguro (el máximo es 30)
+const MAX_CALLS_PER_SECOND = 25; // Limite seguro (el maximo es 30)
 const CALL_INTERVAL = 1000 / MAX_CALLS_PER_SECOND; // Milisegundos entre llamadas
 
 class FinnhubService {
@@ -14,12 +15,47 @@ class FinnhubService {
     this.callQueue = [];
     this.isProcessing = false;
     this.lastCallTime = 0;
+    this.cache = new Map();
+    this.cacheTimeout = 60000; // 1 minute cache
+
+    // Check if API key is configured
+    if (API_KEY === 'demo') {
+      console.warn(
+        'FinnhubService: Using demo API key. Set VITE_FINNHUB_API_KEY in .env for full functionality.'
+      );
+    }
+  }
+
+  /**
+   * Check if cached data is still valid
+   */
+  getCached(key) {
+    const cached = this.cache.get(key);
+    if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+      return cached.data;
+    }
+    return null;
+  }
+
+  /**
+   * Store data in cache
+   */
+  setCache(key, data) {
+    this.cache.set(key, { data, timestamp: Date.now() });
   }
 
   /**
    * Realiza una llamada GET a la API de Finnhub
    */
   async fetchAPI(endpoint, params = {}) {
+    const cacheKey = `${endpoint}:${JSON.stringify(params)}`;
+
+    // Check cache first
+    const cached = this.getCached(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const queryParams = new URLSearchParams({
       ...params,
       token: API_KEY
@@ -31,10 +67,18 @@ class FinnhubService {
       if (response.status === 429) {
         throw new Error('Rate limit exceeded. Please wait before making more requests.');
       }
+      if (response.status === 401) {
+        throw new Error('Invalid API key. Please check your VITE_FINNHUB_API_KEY.');
+      }
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+
+    // Cache successful responses
+    this.setCache(cacheKey, data);
+
+    return data;
   }
 
   /**
@@ -80,14 +124,14 @@ class FinnhubService {
   }
 
   /**
-   * Obtiene cotización en tiempo real de un símbolo
+   * Obtiene cotizacion en tiempo real de un simbolo
    */
   async getQuote(symbol) {
     return this.enqueueCall(() => this.fetchAPI('/quote', { symbol }));
   }
 
   /**
-   * Obtiene perfil de compañía
+   * Obtiene perfil de compania
    */
   async getCompanyProfile(symbol) {
     return this.enqueueCall(() => this.fetchAPI('/stock/profile2', { symbol }));
@@ -115,37 +159,37 @@ class FinnhubService {
   }
 
   /**
-   * Obtiene datos financieros básicos
+   * Obtiene datos financieros basicos
    */
   async getBasicFinancials(symbol) {
     return this.enqueueCall(() => this.fetchAPI('/stock/metric', { symbol, metric: 'all' }));
   }
 
   /**
-   * Obtiene noticias de la compañía
+   * Obtiene noticias de la compania
    */
   async getCompanyNews(symbol, fromDate, toDate) {
     return this.enqueueCall(() => this.fetchAPI('/company-news', { symbol, from: fromDate, to: toDate }));
   }
 
   /**
-   * Obtiene composición de ETF
+   * Obtiene composicion de ETF
    */
   async getETFHoldings(symbol) {
     return this.enqueueCall(() => this.fetchAPI('/etf/holdings', { symbol }));
   }
 
   /**
-   * Obtiene exposición sectorial de ETF
+   * Obtiene exposicion sectorial de ETF
    */
   async getETFSectorExposure(symbol) {
     return this.enqueueCall(() => this.fetchAPI('/etf/sector', { symbol }));
   }
 
   /**
-   * Obtiene datos históricos de velas (candles) para gráficos
-   * @param {string} symbol - Símbolo del stock (ej: AAPL)
-   * @param {string} resolution - Resolución (1, 5, 15, 30, 60, D, W, M)
+   * Obtiene datos historicos de velas (candles) para graficos
+   * @param {string} symbol - Simbolo del stock (ej: AAPL)
+   * @param {string} resolution - Resolucion (1, 5, 15, 30, 60, D, W, M)
    * @param {number} from - Unix timestamp de inicio
    * @param {number} to - Unix timestamp de fin
    */
@@ -159,7 +203,7 @@ class FinnhubService {
   }
 
   /**
-   * Obtiene datos completos de un símbolo (stock o ETF)
+   * Obtiene datos completos de un simbolo (stock o ETF)
    */
   async getFullStockData(symbol, isETF = false) {
     try {
@@ -183,10 +227,24 @@ class FinnhubService {
   }
 
   /**
-   * Limpia la cola (útil para detener actualizaciones)
+   * Limpia la cola (util para detener actualizaciones)
    */
   clearQueue() {
     this.callQueue = [];
+  }
+
+  /**
+   * Limpia la cache
+   */
+  clearCache() {
+    this.cache.clear();
+  }
+
+  /**
+   * Check if API is available
+   */
+  isAvailable() {
+    return API_KEY !== 'demo';
   }
 }
 

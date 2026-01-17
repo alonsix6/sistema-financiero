@@ -3,6 +3,7 @@
  */
 
 import React, { useState } from 'react';
+import * as Icons from 'lucide-react';
 import { BANCOS } from '../../utils/constants.js';
 
 const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete, transacciones = [] }) => {
@@ -186,7 +187,7 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete, transacciones =
       {/* Información adicional */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
         <p className="text-xs text-blue-800">
-          💡 <strong>Nota:</strong> Si configuras un día mayor a 28, el sistema ajustará automáticamente la fecha en meses que no tengan ese día (ej: 31 en febrero se ajustará al último día del mes).
+          Icons.Info &&  <strong>Nota:</strong> Si configuras un día mayor a 28, el sistema ajustará automáticamente la fecha en meses que no tengan ese día (ej: 31 en febrero se ajustará al último día del mes).
         </p>
       </div>
 
@@ -197,7 +198,7 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete, transacciones =
             onClick={handleDelete}
             className="w-full px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 font-medium"
           >
-            🗑️ Eliminar Tarjeta
+            <Icons.Trash2 size={18} className="inline mr-2" />Eliminar Tarjeta
           </button>
         </div>
       )}
