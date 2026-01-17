@@ -859,7 +859,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
               <div className="flex items-center justify-between mb-2">
                 <h2 className={`text-2xl font-bold ${textClass}`}>{detailStock.symbol}</h2>
                 <span className={`text-sm px-3 py-1 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} ${textSecondaryClass}`}>
-                  {detailStock.type === 'etf' ? '📊 ETF' : '📈 Stock'}
+                  {detailStock.type === 'etf' ? 'ETF' : 'Stock'}
                 </span>
               </div>
               <p className={`text-sm ${textSecondaryClass}`}>{detailStock.name}</p>

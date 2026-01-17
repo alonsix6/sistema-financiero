@@ -61,7 +61,7 @@ const FormularioTransaccion = ({ tipo, tarjetas, onSave, onClose, transaccionEdi
       const disponible = tarjetaSeleccionada.limite - tarjetaSeleccionada.saldoActual;
 
       if (transaccion.monto > disponible) {
-        alert(`⚠️ Límite de crédito excedido\n\nDisponible: S/ ${disponible.toFixed(2)}\nMonto: S/ ${transaccion.monto.toFixed(2)}\nFaltante: S/ ${(transaccion.monto - disponible).toFixed(2)}\n\n💡 Necesitas pagar tu tarjeta o reducir el monto.`);
+        alert(`Límite de crédito excedido\n\nDisponible: S/ ${disponible.toFixed(2)}\nMonto: S/ ${transaccion.monto.toFixed(2)}\nFaltante: S/ ${(transaccion.monto - disponible).toFixed(2)}\n\nNecesitas pagar tu tarjeta o reducir el monto.`);
         return;
       }
     }

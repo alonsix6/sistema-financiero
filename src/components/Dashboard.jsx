@@ -4,6 +4,16 @@
  */
 
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import {
+  CreditCard, Wallet, TrendingUp, TrendingDown, Target, RefreshCw,
+  Plus, Minus, Trash2, ChevronLeft, ChevronRight, Calendar, Clock, AlertTriangle,
+  CheckCircle, DollarSign, PieChart, BarChart3, ArrowUpRight, ArrowDownRight,
+  FileText, Settings, Moon, Sun, Home, Receipt, Repeat, LineChart, Briefcase,
+  AlertCircle, Info, Landmark, ShoppingCart, Car, Utensils, Gamepad2, Shirt,
+  Pill, GraduationCap, Gift, Lightbulb, Smartphone, Building2, Banknote, Coins,
+  CircleDollarSign, HandCoins, Percent, Sparkles, Activity, LogOut
+} from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { CATEGORIAS, TIPOS_INGRESO, BANCOS, CATEGORIAS_METAS } from '../utils/constants.js';
 import Calculations from '../utils/calculations.js';
 import Modal from './Modal.jsx';
@@ -132,7 +142,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
       const yaNotificado = sessionStorage.getItem('cuotas_notificadas');
 
       if (!yaNotificado) {
-        const mensaje = `📅 Tienes ${cuotasProximas.length} cuota(s) próxima(s) en los próximos 7 días:\n\n` +
+        const mensaje = `Tienes ${cuotasProximas.length} cuota(s) próxima(s) en los próximos 7 días:\n\n` +
           cuotasProximas.slice(0, 3).map(c =>
             `• ${c.descripcion} - S/ ${c.monto.toFixed(2)} (${c.fecha.toLocaleDateString('es-PE')})`
           ).join('\n') +
@@ -232,7 +242,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
     // Si hay cuotas pendientes y el monto puede cubrir alguna, preguntar
     if (comprasConCuotas.length > 0 && monto > 0 && totalCuotasPendientes > 0) {
-      const mensaje = `💳 Tienes S/ ${totalCuotasPendientes.toFixed(2)} en ${comprasConCuotas.length} compra(s) en cuotas pendientes.\n\n¿Deseas usar parte del pago (S/ ${monto.toFixed(2)}) para pagar cuotas automáticamente?\n\n✅ Se pagarán cuotas completas empezando por las más antiguas.`;
+      const mensaje = `Tienes S/ ${totalCuotasPendientes.toFixed(2)} en ${comprasConCuotas.length} compra(s) en cuotas pendientes.\n\n¿Deseas usar parte del pago (S/ ${monto.toFixed(2)}) para pagar cuotas automáticamente?\n\nSe pagarán cuotas completas empezando por las más antiguas.`;
 
       if (confirm(mensaje)) {
         // Guardar estado anterior para comparar
@@ -295,7 +305,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
     onUpdateData({ ...userData, transacciones: nuevasTransacciones, tarjetas: tarjetasActualizadas });
     setModalPagoTarjeta(false);
     setTarjetaPagar(null);
-    alert(`✅ Pago de S/ ${monto.toFixed(2)} registrado correctamente`);
+    alert(`Pago de S/ ${monto.toFixed(2)} registrado correctamente`);
   };
 
   // Handlers de Transacciones
@@ -341,19 +351,19 @@ const Dashboard = ({ userData, onUpdateData }) => {
       const cuotasRestantes = transaccion.cuotasInfo.cuotasRestantes;
       const montoRestante = cuotasRestantes * transaccion.cuotasInfo.montoPorCuota;
 
-      mensaje = `⚠️ ELIMINAR COMPRA EN CUOTAS\n\n` +
+      mensaje = `ELIMINAR COMPRA EN CUOTAS\n\n` +
                 `Compra: ${transaccion.descripcion}\n` +
                 `Monto original: S/ ${transaccion.monto.toFixed(2)}\n\n` +
-                `📊 Estado actual:\n` +
+                `Estado actual:\n` +
                 `• Cuotas pagadas: ${cuotasPagadas}/${transaccion.cuotasInfo.numeroCuotas} (S/ ${montoPagado.toFixed(2)})\n` +
                 `• Cuotas pendientes: ${cuotasRestantes} (S/ ${montoRestante.toFixed(2)})\n\n`;
 
       if (cuotasPagadas > 0) {
-        mensaje += `⚠️ IMPORTANTE: Ya pagaste ${cuotasPagadas} cuota(s) (S/ ${montoPagado.toFixed(2)}).\n` +
+        mensaje += `IMPORTANTE: Ya pagaste ${cuotasPagadas} cuota(s) (S/ ${montoPagado.toFixed(2)}).\n` +
                    `Al eliminar, esta información se perderá.\n\n`;
       }
 
-      mensaje += `✅ Al eliminar, se liberarán S/ ${montoRestante.toFixed(2)} de crédito de tu tarjeta.\n\n` +
+      mensaje += `Al eliminar, se liberarán S/ ${montoRestante.toFixed(2)} de crédito de tu tarjeta.\n\n` +
                  `¿Estás seguro de eliminar esta compra?`;
     }
 
@@ -551,8 +561,8 @@ const Dashboard = ({ userData, onUpdateData }) => {
     setTransaccionPagarAdelantado(null);
 
     const mensajeExito = montoParcial > 0
-      ? `✅ Pago registrado correctamente\n\n💳 ${cuotasAPagar} cuota(s) completa(s) pagadas\n💰 S/ ${montoParcial.toFixed(2)} abonados a la siguiente cuota\n\nFalta S/ ${(transaccionPagarAdelantado.cuotasInfo.montoPorCuota - montoParcial).toFixed(2)} en la próxima cuota`
-      : `✅ Pago adelantado registrado correctamente\n\n💳 ${cuotasAPagar} cuota(s) pagadas\n💰 S/ ${montoTotal.toFixed(2)} liberados de tu tarjeta`;
+      ? `Pago registrado correctamente\n\nTarjeta: ${cuotasAPagar} cuota(s) completa(s) pagadas\nMonto: S/ ${montoParcial.toFixed(2)} abonados a la siguiente cuota\n\nFalta S/ ${(transaccionPagarAdelantado.cuotasInfo.montoPorCuota - montoParcial).toFixed(2)} en la próxima cuota`
+      : `Pago adelantado registrado correctamente\n\nTarjeta: ${cuotasAPagar} cuota(s) pagadas\nMonto: S/ ${montoTotal.toFixed(2)} liberados de tu tarjeta`;
 
     alert(mensajeExito);
   };
@@ -573,7 +583,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
   const handleDeleteMeta = (id) => {
     const meta = (userData.metas || []).find(m => m.id === id);
     if (meta && meta.montoAhorrado > 0) {
-      alert(`⚠️ Esta meta tiene S/ ${meta.montoAhorrado.toFixed(2)} ahorrados. Al eliminarla, este dinero volverá a tu efectivo disponible.`);
+      alert(`Esta meta tiene S/ ${meta.montoAhorrado.toFixed(2)} ahorrados. Al eliminarla, este dinero volverá a tu efectivo disponible.`);
     }
     const nuevasMetas = (userData.metas || []).filter(m => m.id !== id);
     onUpdateData({ ...userData, metas: nuevasMetas });
@@ -600,9 +610,9 @@ const Dashboard = ({ userData, onUpdateData }) => {
     const progreso = Calculations.calcularProgresoMeta(metaActualizada);
 
     if (progreso.alcanzada && monto > 0) {
-      alert(`🎉 ¡Felicidades! Has completado tu meta "${metaAportar.nombre}"\n\n💰 Ahorrado: S/ ${metaActualizada.montoAhorrado.toFixed(2)}`);
+      alert(`¡Felicidades! Has completado tu meta "${metaAportar.nombre}"\n\nMonto: Ahorrado: S/ ${metaActualizada.montoAhorrado.toFixed(2)}`);
     } else {
-      alert(`✅ ${tipoOperacion} registrado correctamente\n\n💰 Nuevo saldo en "${metaAportar.nombre}": S/ ${metaActualizada.montoAhorrado.toFixed(2)}\n📊 Progreso: ${progreso.porcentaje}%`);
+      alert(`${tipoOperacion} registrado correctamente\n\nMonto: Nuevo saldo en "${metaAportar.nombre}": S/ ${metaActualizada.montoAhorrado.toFixed(2)}\nProgreso: ${progreso.porcentaje}%`);
     }
   };
 
@@ -633,7 +643,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
               }`}
             >
-              {darkMode ? '☀️' : '🌙'}
+              {darkMode ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-gray-600" />}
             </button>
             <button
               onClick={() => confirm('¿Cerrar sesión?') && window.location.reload()}
@@ -647,20 +657,33 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
       {/* Navigation Tabs */}
       <div className={`${cardClass} border-b sticky top-16 z-30 transition-colors`}>
-        <div className="max-w-7xl mx-auto px-4 flex gap-1 overflow-x-auto">
-          {['inicio', 'tarjetas', 'transacciones', 'cuotas', 'inversiones', 'metas', 'proyección', 'recurrencias'].map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-6 py-4 font-medium capitalize whitespace-nowrap ${
-                activeTab === tab
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : textSecondaryClass
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 nav-tabs flex gap-1 overflow-x-auto scrollbar-hide">
+          {[
+            { id: 'inicio', label: 'Inicio', icon: Home },
+            { id: 'tarjetas', label: 'Tarjetas', icon: CreditCard },
+            { id: 'transacciones', label: 'Movimientos', icon: Receipt },
+            { id: 'cuotas', label: 'Cuotas', icon: Calendar },
+            { id: 'inversiones', label: 'Inversiones', icon: TrendingUp },
+            { id: 'metas', label: 'Metas', icon: Target },
+            { id: 'proyección', label: 'Proyección', icon: LineChart },
+            { id: 'recurrencias', label: 'Recurrencias', icon: Repeat }
+          ].map(tab => {
+            const IconComponent = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 sm:px-6 py-3 sm:py-4 font-medium whitespace-nowrap flex items-center gap-2 transition-colors ${
+                  activeTab === tab.id
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : textSecondaryClass
+                }`}
+              >
+                <IconComponent size={18} />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -671,7 +694,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
           <div className="space-y-8">
             {/* Filtro de Período */}
             <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
-              <h3 className={`text-lg font-bold mb-4 ${textClass}`}>📅 Filtrar Período</h3>
+              <h3 className={`text-lg font-bold mb-4 ${textClass}`}>Filtrar Período</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${textSecondaryClass}`}>Fecha Inicio</label>
@@ -710,7 +733,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
             {/* Resumen del Período */}
             <div>
-              <h2 className={`text-lg font-bold mb-4 ${textClass}`}>💼 Resumen del Período Seleccionado</h2>
+              <h2 className={`text-lg font-bold mb-4 ${textClass}`}>Resumen del Período Seleccionado</h2>
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
                 <div className={`${cardClass} rounded-2xl shadow-lg p-6 card-hover`}>
                   <p className={`text-sm mb-2 ${textSecondaryClass}`}>Ingresos</p>
@@ -735,19 +758,19 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
             {/* Efectivo Disponible */}
             <div>
-              <h2 className={`text-lg font-bold mb-4 ${textClass}`}>💵 Efectivo Disponible</h2>
+              <h2 className={`text-lg font-bold mb-4 ${textClass}`}>Efectivo Disponible</h2>
               <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-8 text-white">
                 <p className="text-sm opacity-80 mb-2">Dinero que puedes mover ahora</p>
                 <p className="text-5xl font-bold mb-3">S/ {efectivoDisponible.toFixed(2)}</p>
                 <p className="text-xs opacity-80">
-                  ✅ Este es tu saldo real en efectivo (ingresos - gastos en efectivo - pagos de tarjetas)
+                  Este es tu saldo real en efectivo (ingresos - gastos en efectivo - pagos de tarjetas)
                 </p>
               </div>
             </div>
 
             {/* Cashflow Total */}
             <div>
-              <h2 className={`text-lg font-bold mb-4 ${textClass}`}>🦋 Cashflow Total (Todo el Histórico)</h2>
+              <h2 className={`text-lg font-bold mb-4 ${textClass}`}>Cashflow Total (Todo el Histórico)</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
                   <p className="text-sm opacity-80 mb-1">Total Ingresos</p>
@@ -763,7 +786,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                   <p className="text-sm opacity-80 mb-1">Cashflow Neto</p>
                   <p className="text-3xl font-bold">S/ {cashflowTotal.cashflowNeto.toFixed(2)}</p>
                   <p className="text-xs opacity-80 mt-2">
-                    {cashflowTotal.cashflowNeto >= 0 ? '✓ Superávit' : '⚠️ Déficit'}
+                    {cashflowTotal.cashflowNeto >= 0 ? 'Superávit' : 'Déficit'}
                   </p>
                 </div>
               </div>
@@ -772,7 +795,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
             {/* Próximos Pagos */}
             {proximosPagos.length > 0 && (
               <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
-                <h2 className={`text-xl font-bold mb-4 ${textClass}`}>📅 Próximos Pagos de Tarjetas</h2>
+                <h2 className={`text-xl font-bold mb-4 ${textClass}`}>Próximos Pagos de Tarjetas</h2>
                 <div className="space-y-3">
                   {proximosPagos.map((pago, idx) => (
                     <div
@@ -801,7 +824,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                           }}
                           className="text-sm text-blue-600 hover:text-blue-800 font-medium mt-1"
                         >
-                          💳 Pagar
+                          Tarjeta: Pagar
                         </button>
                       </div>
                     </div>
@@ -814,7 +837,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
             {Object.keys(gastosPorCategoria).length > 0 && (
               <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
                 <h2 className={`text-xl font-bold mb-6 ${textClass}`}>
-                  📊 Gastos por Categoría (Período Seleccionado)
+                  Gastos por Categoría (Período Seleccionado)
                 </h2>
                 <Suspense fallback={<LoadingSpinner />}>
                   <GraficoCategorias gastosPorCategoria={gastosPorCategoria} />
@@ -832,7 +855,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 }}
                 className={`${cardClass} rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all text-center`}
               >
-                <span className="text-4xl block mb-2">💰</span>
+                <Wallet size={40} className="mx-auto mb-2 text-blue-500" />
                 <p className={`font-semibold ${textClass}`}>Registrar Gasto</p>
               </button>
               <button
@@ -843,7 +866,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 }}
                 className={`${cardClass} rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all text-center`}
               >
-                <span className="text-4xl block mb-2">💵</span>
+                <Banknote size={40} className="mx-auto mb-2 text-green-500" />
                 <p className={`font-semibold ${textClass}`}>Registrar Ingreso</p>
               </button>
             </div>
@@ -854,7 +877,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
         {activeTab === 'tarjetas' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className={`text-2xl font-bold ${textClass}`}>💳 Mis Tarjetas</h2>
+              <h2 className={`text-2xl font-bold ${textClass}`}>Tarjeta: Mis Tarjetas</h2>
               <button
                 onClick={() => {
                   setTarjetaEditar(null);
@@ -868,7 +891,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
             {userData.tarjetas.length === 0 ? (
               <div className={`${cardClass} rounded-2xl shadow-lg p-12 text-center`}>
-                <span className="text-6xl block mb-4">💳</span>
+                <CreditCard size={64} className="mx-auto mb-4 text-gray-400" />
                 <h3 className={`text-xl font-bold mb-2 ${textClass}`}>No tienes tarjetas</h3>
                 <p className={`mb-6 ${textSecondaryClass}`}>Agrega tu primera tarjeta</p>
                 <button
@@ -937,8 +960,8 @@ const Dashboard = ({ userData, onUpdateData }) => {
                         )}
 
                         <div className="flex justify-between text-sm pt-2 border-t border-white/20">
-                          <span>📅 Cierre: día {tarjeta.fechaCierre}</span>
-                          <span>💳 Pago: día {tarjeta.fechaPago}</span>
+                          <span>Cierre: día {tarjeta.fechaCierre}</span>
+                          <span>Tarjeta: Pago: día {tarjeta.fechaPago}</span>
                         </div>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
@@ -984,7 +1007,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
         {activeTab === 'transacciones' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className={`text-2xl font-bold ${textClass}`}>📊 Movimientos</h2>
+              <h2 className={`text-2xl font-bold ${textClass}`}>Movimientos</h2>
               <div className="flex gap-3">
                 <button
                   onClick={() => {
@@ -1011,7 +1034,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
             {userData.transacciones.length === 0 ? (
               <div className={`${cardClass} rounded-2xl shadow-lg p-12 text-center`}>
-                <span className="text-6xl block mb-4">📊</span>
+                <BarChart3 size={64} className="mx-auto mb-4 text-gray-400" />
                 <h3 className={`text-xl font-bold mb-2 ${textClass}`}>No hay transacciones</h3>
                 <p className={textSecondaryClass}>Comienza registrando tus movimientos</p>
               </div>
@@ -1021,7 +1044,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 {userData.transacciones.length > MAX_TRANSACCIONES && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
                     <p className="text-sm text-yellow-800">
-                      ⚠️ <strong>Alerta de Performance:</strong> Tienes {userData.transacciones.length.toLocaleString()} transacciones.
+                      <AlertTriangle size={14} className="inline" />  <strong>Alerta de Performance:</strong> Tienes {userData.transacciones.length.toLocaleString()} transacciones.
                       Se recomienda exportar y archivar transacciones antiguas para mantener el rendimiento óptimo.
                     </p>
                   </div>
@@ -1066,16 +1089,16 @@ const Dashboard = ({ userData, onUpdateData }) => {
                             <td className={`px-6 py-4 whitespace-nowrap text-sm ${textSecondaryClass}`}>
                               {fechaLocal.toLocaleDateString('es-PE')}
                               {t.esRecurrente && <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">♻️</span>}
-                              {t.tipo === 'PagoTarjeta' && !t.esPagoAdelantado && <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">💳</span>}
+                              {t.tipo === 'PagoTarjeta' && !t.esPagoAdelantado && <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded flex items-center gap-1"><CreditCard size={12} /></span>}
                               {t.esCuotas && (
                                 <span className={`ml-2 text-xs px-2 py-1 rounded font-semibold ${
                                   t.cuotasInfo.fechasCobro && t.cuotasInfo.fechasCobro.some(c => c.estado === 'parcial')
                                     ? 'bg-amber-100 text-amber-800'
                                     : 'bg-purple-100 text-purple-800'
                                 }`}>
-                                  💳 {t.cuotasInfo.cuotasPagadas}/{t.cuotasInfo.numeroCuotas} cuotas
+                                  Tarjeta: {t.cuotasInfo.cuotasPagadas}/{t.cuotasInfo.numeroCuotas} cuotas
                                   {t.cuotasInfo.fechasCobro && t.cuotasInfo.fechasCobro.some(c => c.estado === 'parcial') && (
-                                    <span className="ml-1" title="Tiene cuota pagada parcialmente">⚠️</span>
+                                    <span className="ml-1" title="Tiene cuota pagada parcialmente"><AlertTriangle size={12} className="inline" /></span>
                                   )}
                                 </span>
                               )}
@@ -1091,7 +1114,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                                     }}
                                     className="mt-1 text-xs text-purple-600 hover:text-purple-800 font-semibold"
                                   >
-                                    💳 Pagar {t.cuotasInfo.cuotasRestantes} cuota(s) adelantada(s)
+                                    Tarjeta: Pagar {t.cuotasInfo.cuotasRestantes} cuota(s) adelantada(s)
                                   </button>
                                 )}
                                 {t.esCuotas && t.cuotasInfo.pagosAdelantados && t.cuotasInfo.pagosAdelantados.length > 0 && (
@@ -1102,14 +1125,14 @@ const Dashboard = ({ userData, onUpdateData }) => {
                                     }}
                                     className="mt-1 ml-2 text-xs text-gray-600 hover:text-gray-800 font-semibold"
                                   >
-                                    📋 Ver historial
+                                    Ver historial
                                   </button>
                                 )}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                               <span className="inline-flex items-center gap-2">
-                                <span>{categoria?.icono || '💳'}</span>
+                                <span>{Icons[categoria?.iconName] ? React.createElement(Icons[categoria.iconName], { size: 16 }) : <CreditCard size={16} />}</span>
                                 <span className={textSecondaryClass}>{t.categoria}</span>
                               </span>
                             </td>
@@ -1144,7 +1167,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                                 className="text-red-600 hover:text-red-800"
                                 title="Eliminar"
                               >
-                                🗑️
+                                <Trash2 size={16} />
                               </button>
                             </td>
                           </tr>
@@ -1281,7 +1304,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
         {activeTab === 'proyección' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className={`text-2xl font-bold ${textClass}`}>🔮 Proyección Financiera (6 meses)</h2>
+              <h2 className={`text-2xl font-bold ${textClass}`}>Proyección Financiera (6 meses)</h2>
               <button
                 onClick={() => {
                   setModalSimulador(true);
@@ -1290,20 +1313,20 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 }}
                 className="px-6 py-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600"
               >
-                🔮 Simular Movimiento
+                Simular Movimiento
               </button>
             </div>
 
             <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
                 <p className="text-sm text-blue-800">
-                  <strong>💡 Nota importante:</strong> Esta proyección usa tu <strong>efectivo disponible</strong> como base (S/ {proyeccion.saldoInicial.toFixed(2)}). Solo considera movimientos en efectivo: ingresos recurrentes y pagos de tarjetas programados.
+                  <Info size={14} className="inline" /> <strong>Nota importante:</strong> Esta proyección usa tu <strong>efectivo disponible</strong> como base (S/ {proyeccion.saldoInicial.toFixed(2)}). Solo considera movimientos en efectivo: ingresos recurrentes y pagos de tarjetas programados.
                 </p>
               </div>
 
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className={`text-lg font-bold ${textClass}`}>💰 Efectivo Actual</h3>
+                  <h3 className={`text-lg font-bold ${textClass}`}>Monto: Efectivo Actual</h3>
                   <p className={`text-4xl font-bold ${proyeccion.saldoInicial >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     S/ {proyeccion.saldoInicial.toFixed(2)}
                   </p>
@@ -1329,10 +1352,10 @@ const Dashboard = ({ userData, onUpdateData }) => {
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-gray-800">{e.descripcion}</p>
                           {e.recurrente && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">♻️ Auto</span>}
-                          {e.esCuota && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold">💳 Cuota</span>}
+                          {e.esCuota && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold">Tarjeta: Cuota</span>}
                         </div>
                         <p className="text-sm text-gray-600 mt-1">
-                          📅 {e.fecha.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                          <Calendar size={14} className="inline" />  {e.fecha.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">{e.categoria}{e.tarjeta && ` • ${e.tarjeta}`}</p>
                       </div>
@@ -1356,7 +1379,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
               {proyeccion.eventos.some(e => e.color === 'rojo') && (
                 <div className="mt-6 bg-red-50 border border-red-200 rounded-xl p-4">
-                  <p className="font-bold text-red-800 mb-2">⚠️ Alertas de Déficit</p>
+                  <p className="font-bold text-red-800 mb-2">Alertas de Déficit</p>
                   <p className="text-sm text-red-700">
                     Tienes {proyeccion.eventos.filter(e => e.color === 'rojo').length} pagos en riesgo. Considera priorizar pagos, ajustar gastos o buscar ingresos adicionales.
                   </p>
@@ -1370,7 +1393,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
         {activeTab === 'metas' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className={`text-2xl font-bold ${textClass}`}>🎯 Metas de Ahorro</h2>
+              <h2 className={`text-2xl font-bold ${textClass}`}>Metas de Ahorro</h2>
               <button
                 onClick={() => {
                   setMetaEditar(null);
@@ -1385,21 +1408,21 @@ const Dashboard = ({ userData, onUpdateData }) => {
             {/* Panel de Información de Ahorro */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-6 text-white">
-                <p className="text-sm opacity-80 mb-1">💰 Disponible para Ahorrar</p>
+                <p className="text-sm opacity-80 mb-1">Monto: Disponible para Ahorrar</p>
                 <p className="text-3xl font-bold mb-2">S/ {disponibleParaAhorrar.toFixed(2)}</p>
                 <p className="text-xs opacity-80">
                   Efectivo - Deudas - Dinero en metas
                 </p>
               </div>
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
-                <p className="text-sm opacity-80 mb-1">📊 Cashflow Promedio (3 meses)</p>
+                <p className="text-sm opacity-80 mb-1">Cashflow Promedio (3 meses)</p>
                 <p className="text-3xl font-bold mb-2">S/ {cashflowPromedio.cashflowNeto.toFixed(2)}</p>
                 <p className="text-xs opacity-80">
                   {cashflowPromedio.cashflowNeto > 0 ? 'Capacidad de ahorro mensual' : 'Necesitas aumentar ingresos'}
                 </p>
               </div>
               <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white">
-                <p className="text-sm opacity-80 mb-1">🎯 Total en Metas</p>
+                <p className="text-sm opacity-80 mb-1">Total en Metas</p>
                 <p className="text-3xl font-bold mb-2">
                   S/ {(userData.metas || []).reduce((sum, m) => sum + (m.montoAhorrado || 0), 0).toFixed(2)}
                 </p>
@@ -1412,14 +1435,14 @@ const Dashboard = ({ userData, onUpdateData }) => {
             {/* Explicación */}
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
               <p className="text-sm text-blue-800">
-                💡 <strong>¿Cómo funciona?</strong> El "Disponible para Ahorrar" considera tu efectivo actual menos las deudas de tarjetas y el dinero ya asignado en otras metas. Esto te muestra cuánto dinero real puedes destinar a nuevas metas sin comprometer tus obligaciones.
+                <Info size={14} className="inline" />  <strong>¿Cómo funciona?</strong> El "Disponible para Ahorrar" considera tu efectivo actual menos las deudas de tarjetas y el dinero ya asignado en otras metas. Esto te muestra cuánto dinero real puedes destinar a nuevas metas sin comprometer tus obligaciones.
               </p>
             </div>
 
             {/* Lista de Metas */}
             {(!userData.metas || userData.metas.length === 0) ? (
               <div className={`${cardClass} rounded-2xl shadow-lg p-12 text-center`}>
-                <span className="text-6xl block mb-4">🎯</span>
+                <Target size={64} className="mx-auto mb-4 text-gray-400" />
                 <h3 className={`text-xl font-bold mb-2 ${textClass}`}>No tienes metas de ahorro</h3>
                 <p className={`mb-6 ${textSecondaryClass}`}>
                   Crea tu primera meta y comienza a ahorrar de forma inteligente
@@ -1453,20 +1476,23 @@ const Dashboard = ({ userData, onUpdateData }) => {
                         {/* Indicador de Meta Alcanzada */}
                         {progreso.alcanzada && (
                           <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold">
-                            ✅ Completada
+                            <CheckCircle size={14} className="inline" />  Completada
                           </div>
                         )}
 
                         {/* Indicador de Atraso */}
                         {progreso.atrasada && (
                           <div className="absolute top-4 right-4 bg-red-500/90 px-3 py-1 rounded-full text-xs font-bold">
-                            ⚠️ Atrasada
+                            <AlertTriangle size={14} className="inline" />  Atrasada
                           </div>
                         )}
 
                         {/* Encabezado */}
                         <div className="flex items-center gap-3 mb-4">
-                          <span className="text-4xl">{categoria.icono}</span>
+                          {(() => {
+                            const IconComponent = Icons[categoria?.iconName] || Target;
+                            return <IconComponent size={40} className="text-white/90" />;
+                          })()}
                           <div className="flex-1">
                             <h3 className="text-xl font-bold">{meta.nombre}</h3>
                             <p className="text-sm opacity-80">{meta.categoria}</p>
@@ -1530,7 +1556,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                           {!progreso.alcanzada && tiempoEstimado && !tiempoEstimado.alcanzada && tiempoEstimado.meses !== Infinity && (
                             <div className="mt-2 p-2 bg-white/10 rounded-lg">
                               <p className="text-xs opacity-90">
-                                📅 Con tu cashflow actual: <strong>{tiempoEstimado.meses} mes(es)</strong>
+                                <Calendar size={14} className="inline" />  Con tu cashflow actual: <strong>{tiempoEstimado.meses} mes(es)</strong>
                                 {tiempoEstimado.anios > 0 && ` (${tiempoEstimado.anios} año(s), ${tiempoEstimado.mesesRestantes} mes(es))`}
                               </p>
                             </div>
@@ -1546,7 +1572,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                             }}
                             className="bg-white/20 hover:bg-white/30 py-2.5 rounded-lg text-sm font-semibold"
                           >
-                            💰 Aportar
+                            Monto: Aportar
                           </button>
                           <button
                             onClick={() => {
@@ -1556,7 +1582,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                             className="bg-white/20 hover:bg-white/30 py-2.5 rounded-lg text-sm font-semibold"
                             disabled={meta.montoAhorrado === 0}
                           >
-                            💸 Retirar
+                            <ArrowDownRight size={16} className="inline" /> Retirar
                           </button>
                           <button
                             onClick={() => {
@@ -1628,13 +1654,13 @@ const Dashboard = ({ userData, onUpdateData }) => {
             <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
                 <p className="text-sm text-blue-800">
-                  💡 <strong>Nota:</strong> Las recurrencias se registran automáticamente cuando llega la fecha configurada. No necesitas agregarlas manualmente para evitar duplicados.
+                  <Info size={14} className="inline" />  <strong>Nota:</strong> Las recurrencias se registran automáticamente cuando llega la fecha configurada. No necesitas agregarlas manualmente para evitar duplicados.
                 </p>
               </div>
 
               {(!userData.recurrencias || userData.recurrencias.length === 0) ? (
                 <div className="text-center py-12">
-                  <span className="text-6xl block mb-4">📅</span>
+                  <Calendar size={64} className="mx-auto mb-4 text-gray-400" />
                   <h3 className={`text-xl font-bold mb-2 ${textClass}`}>Sin recurrencias configuradas</h3>
                   <p className={`mb-6 ${textSecondaryClass}`}>Agrega salarios, suscripciones y otros pagos automáticos</p>
                   <button
@@ -1659,7 +1685,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <span className="text-2xl">{esIngreso ? '💰' : '💸'}</span>
+                              {esIngreso ? <TrendingUp size={24} className="text-green-500" /> : <TrendingDown size={24} className="text-red-500" />}
                               <h3 className={`text-lg font-bold ${textClass}`}>{rec.descripcion}</h3>
                             </div>
                             <p className={`text-sm ${textSecondaryClass}`}>
@@ -1669,7 +1695,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                           <div className={`px-3 py-1 rounded-full text-xs font-bold ${
                             rec.activo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
                           }`}>
-                            {rec.activo ? '✓ Activo' : 'Inactivo'}
+                            {rec.activo ? 'Activo' : 'Inactivo'}
                           </div>
                         </div>
                         <div className="space-y-2 mb-4">
@@ -1687,7 +1713,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                               </div>
                               <div className="flex justify-between">
                                 <span className={`text-sm ${textSecondaryClass}`}>Método:</span>
-                                <span className={`text-sm ${textClass}`}>{tarjeta ? `💳 ${tarjeta.nombre}` : '💵 Efectivo'}</span>
+                                <span className={`text-sm ${textClass}`}>{tarjeta ? `Tarjeta: ${tarjeta.nombre}` : '<Banknote size={14} className="inline" />  Efectivo'}</span>
                               </div>
                             </>
                           )}
@@ -1730,19 +1756,19 @@ const Dashboard = ({ userData, onUpdateData }) => {
         </Suspense>
       </Modal>
 
-      <Modal isOpen={modalSimulador} onClose={() => { setModalSimulador(false); setSimulacionActual(null); setProyeccionSimulada(null); }} title="🔮 Simulador de Movimientos" size="lg">
+      <Modal isOpen={modalSimulador} onClose={() => { setModalSimulador(false); setSimulacionActual(null); setProyeccionSimulada(null); }} title="Simulador de Movimientos" size="lg">
         <Suspense fallback={<LoadingSpinner />}>
           <SimuladorMovimiento proyeccion={proyeccionSimulada} tarjetas={userData.tarjetas} onSimular={handleSimular} onCerrar={() => { setModalSimulador(false); setSimulacionActual(null); setProyeccionSimulada(null); }} />
         </Suspense>
       </Modal>
 
-      <Modal isOpen={modalPagoTarjeta} onClose={() => { setModalPagoTarjeta(false); setTarjetaPagar(null); }} title={`💳 Pagar ${tarjetaPagar?.nombre || 'Tarjeta'}`}>
+      <Modal isOpen={modalPagoTarjeta} onClose={() => { setModalPagoTarjeta(false); setTarjetaPagar(null); }} title={`Tarjeta: Pagar ${tarjetaPagar?.nombre || 'Tarjeta'}`}>
         <Suspense fallback={<LoadingSpinner />}>
           {tarjetaPagar && <FormularioPagoTarjeta tarjeta={tarjetaPagar} efectivoDisponible={efectivoDisponible} onPagar={handlePagarTarjeta} onClose={() => { setModalPagoTarjeta(false); setTarjetaPagar(null); }} />}
         </Suspense>
       </Modal>
 
-      <Modal isOpen={modalPagoAdelantado} onClose={() => { setModalPagoAdelantado(false); setTransaccionPagarAdelantado(null); }} title="💳 Pago Adelantado de Cuotas">
+      <Modal isOpen={modalPagoAdelantado} onClose={() => { setModalPagoAdelantado(false); setTransaccionPagarAdelantado(null); }} title="Tarjeta: Pago Adelantado de Cuotas">
         <Suspense fallback={<LoadingSpinner />}>
           {transaccionPagarAdelantado && <FormularioPagoAdelantado transaccion={transaccionPagarAdelantado} efectivoDisponible={efectivoDisponible} onPagar={handlePagarCuotasAdelantadas} onClose={() => { setModalPagoAdelantado(false); setTransaccionPagarAdelantado(null); }} />}
         </Suspense>
@@ -1754,14 +1780,14 @@ const Dashboard = ({ userData, onUpdateData }) => {
         </Suspense>
       </Modal>
 
-      <Modal isOpen={modalAporteMeta} onClose={() => { setModalAporteMeta(false); setMetaAportar(null); }} title={`💰 ${metaAportar?.nombre || 'Meta de Ahorro'}`}>
+      <Modal isOpen={modalAporteMeta} onClose={() => { setModalAporteMeta(false); setMetaAportar(null); }} title={`Monto: ${metaAportar?.nombre || 'Meta de Ahorro'}`}>
         <Suspense fallback={<LoadingSpinner />}>
           {metaAportar && <FormularioAporteMeta meta={metaAportar} disponibleParaAhorrar={disponibleParaAhorrar} onAportar={handleAportarMeta} onClose={() => { setModalAporteMeta(false); setMetaAportar(null); }} />}
         </Suspense>
       </Modal>
 
       {/* Modal Historial de Pagos Adelantados */}
-      <Modal isOpen={modalHistorialCuotas} onClose={() => { setModalHistorialCuotas(false); setTransaccionHistorial(null); }} title="📋 Historial de Pagos Adelantados">
+      <Modal isOpen={modalHistorialCuotas} onClose={() => { setModalHistorialCuotas(false); setTransaccionHistorial(null); }} title="Historial de Pagos Adelantados">
         {transaccionHistorial && (
           <div className="space-y-4">
             <div className="bg-gray-50 p-4 rounded-lg">
@@ -1825,16 +1851,17 @@ const Dashboard = ({ userData, onUpdateData }) => {
       </Modal>
 
       {/* Botones Flotantes Móviles */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-3 lg:hidden z-30">
+      <div className="fixed bottom-6 right-6 flex flex-col gap-3 lg:hidden z-30 safe-area-inset-bottom">
         <button
           onClick={() => {
             setTipoTransaccion('Gasto');
             setTransaccionEditar(null);
             setModalTransaccion(true);
           }}
-          className="w-14 h-14 bg-red-500 text-white rounded-full shadow-xl"
+          className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform"
+          aria-label="Registrar gasto"
         >
-          ➖
+          <Minus size={24} />
         </button>
         <button
           onClick={() => {
@@ -1842,9 +1869,10 @@ const Dashboard = ({ userData, onUpdateData }) => {
             setTransaccionEditar(null);
             setModalTransaccion(true);
           }}
-          className="w-14 h-14 bg-green-500 text-white rounded-full shadow-xl"
+          className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform"
+          aria-label="Registrar ingreso"
         >
-          ➕
+          <Plus size={24} />
         </button>
       </div>
     </div>

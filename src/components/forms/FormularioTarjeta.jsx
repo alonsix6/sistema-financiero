@@ -27,33 +27,33 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete, transacciones =
     const pago = parseInt(formData.fechaPago);
 
     if (isNaN(cierre) || cierre < 1 || cierre > 31) {
-      newErrors.fechaCierre = 'El día de cierre debe estar entre 1 y 31';
+      newErrors.fechaCierre = { text: 'El día de cierre debe estar entre 1 y 31', isWarning: false };
     }
 
     if (isNaN(pago) || pago < 1 || pago > 31) {
-      newErrors.fechaPago = 'El día de pago debe estar entre 1 y 31';
+      newErrors.fechaPago = { text: 'El día de pago debe estar entre 1 y 31', isWarning: false };
     }
 
     // Advertir sobre días no válidos en todos los meses
     if (cierre > 28 && !newErrors.fechaCierre) {
-      newErrors.fechaCierre = `⚠️ El día ${cierre} no existe en todos los meses. Se ajustará automáticamente.`;
+      newErrors.fechaCierre = { text: `El día ${cierre} no existe en todos los meses. Se ajustará automáticamente.`, isWarning: true };
     }
 
     if (pago > 28 && !newErrors.fechaPago) {
-      newErrors.fechaPago = `⚠️ El día ${pago} no existe en todos los meses. Se ajustará automáticamente.`;
+      newErrors.fechaPago = { text: `El día ${pago} no existe en todos los meses. Se ajustará automáticamente.`, isWarning: true };
     }
 
     // Validar límite
     const limite = parseFloat(formData.limite);
     if (isNaN(limite) || limite <= 0) {
-      newErrors.limite = 'El límite debe ser mayor a 0';
+      newErrors.limite = { text: 'El límite debe ser mayor a 0', isWarning: false };
     }
 
     setErrors(newErrors);
 
     // Solo bloquear si hay errores críticos (no advertencias)
     return !Object.keys(newErrors).some(key =>
-      !newErrors[key].startsWith('⚠️')
+      !newErrors[key].isWarning
     );
   };
 
@@ -84,7 +84,7 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete, transacciones =
     );
 
     if (transaccionesAsociadas.length > 0) {
-      const mensaje = `⚠️ ADVERTENCIA: Esta tarjeta tiene ${transaccionesAsociadas.length} transacción(es) asociada(s).\n\n` +
+      const mensaje = `ADVERTENCIA: Esta tarjeta tiene ${transaccionesAsociadas.length} transacción(es) asociada(s).\n\n` +
         `Si eliminas esta tarjeta:\n` +
         `- Las transacciones NO se eliminarán\n` +
         `- Los cálculos podrían verse afectados\n` +
@@ -141,10 +141,10 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete, transacciones =
             onChange={(e) => setFormData({ ...formData, limite: e.target.value })}
             step="0.01"
             min="0"
-            className={`w-full px-4 py-3 border rounded-xl ${errors.limite ? 'border-red-500' : ''}`}
+            className={`w-full px-4 py-3 border rounded-xl ${errors.limite && !errors.limite.isWarning ? 'border-red-500' : ''}`}
             required
           />
-          {errors.limite && <p className="text-xs text-red-600 mt-1">{errors.limite}</p>}
+          {errors.limite && <p className="text-xs text-red-600 mt-1">{errors.limite.text}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Día Cierre *</label>
@@ -155,12 +155,12 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete, transacciones =
             min="1"
             max="31"
             placeholder="15"
-            className={`w-full px-4 py-3 border rounded-xl ${errors.fechaCierre && !errors.fechaCierre.startsWith('⚠️') ? 'border-red-500' : ''}`}
+            className={`w-full px-4 py-3 border rounded-xl ${errors.fechaCierre && !errors.fechaCierre.isWarning ? 'border-red-500' : ''}`}
             required
           />
           {errors.fechaCierre && (
-            <p className={`text-xs mt-1 ${errors.fechaCierre.startsWith('⚠️') ? 'text-yellow-600' : 'text-red-600'}`}>
-              {errors.fechaCierre}
+            <p className={`text-xs mt-1 ${errors.fechaCierre.isWarning ? 'text-yellow-600' : 'text-red-600'}`}>
+              {errors.fechaCierre.text}
             </p>
           )}
         </div>
@@ -173,21 +173,22 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete, transacciones =
             min="1"
             max="31"
             placeholder="5"
-            className={`w-full px-4 py-3 border rounded-xl ${errors.fechaPago && !errors.fechaPago.startsWith('⚠️') ? 'border-red-500' : ''}`}
+            className={`w-full px-4 py-3 border rounded-xl ${errors.fechaPago && !errors.fechaPago.isWarning ? 'border-red-500' : ''}`}
             required
           />
           {errors.fechaPago && (
-            <p className={`text-xs mt-1 ${errors.fechaPago.startsWith('⚠️') ? 'text-yellow-600' : 'text-red-600'}`}>
-              {errors.fechaPago}
+            <p className={`text-xs mt-1 ${errors.fechaPago.isWarning ? 'text-yellow-600' : 'text-red-600'}`}>
+              {errors.fechaPago.text}
             </p>
           )}
         </div>
       </div>
 
       {/* Información adicional */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2">
+        <Icons.Info size={14} className="text-blue-600 mt-0.5 flex-shrink-0" />
         <p className="text-xs text-blue-800">
-          Icons.Info &&  <strong>Nota:</strong> Si configuras un día mayor a 28, el sistema ajustará automáticamente la fecha en meses que no tengan ese día (ej: 31 en febrero se ajustará al último día del mes).
+          <strong>Nota:</strong> Si configuras un día mayor a 28, el sistema ajustará automáticamente la fecha en meses que no tengan ese día (ej: 31 en febrero se ajustará al último día del mes).
         </p>
       </div>
 
