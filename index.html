@@ -2,8 +2,57 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema Financiero Personal v3.1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+  <!-- Primary Meta Tags -->
+  <title>FinApp - Finanzas Personales</title>
+  <meta name="title" content="FinApp - Finanzas Personales">
+  <meta name="description" content="Sistema de gestion financiera personal con control de tarjetas, gastos y proyecciones">
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#FF2D55">
+  <meta name="msapplication-TileColor" content="#FF2D55">
+
+  <!-- iOS Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FinApp">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Prevent FOUC -->
+  <style>
+    html {
+      background: linear-gradient(180deg, rgba(255, 200, 210, 0.4) 0%, rgba(255, 255, 255, 0.95) 30%, rgba(255, 255, 255, 1) 50%, rgba(230, 230, 250, 0.3) 100%);
+      min-height: 100vh;
+    }
+    body {
+      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    }
+    /* Initial loading state */
+    #root:empty::before {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 40px;
+      margin: calc(50vh - 20px) auto;
+      border: 3px solid #E5E7EB;
+      border-top-color: #FF2D55;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>
