@@ -3,11 +3,11 @@
  */
 
 import React, { useRef, useEffect } from 'react';
-import { Chart, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Chart, ArcElement, Tooltip, Legend, DoughnutController } from 'chart.js';
 import { CATEGORIAS } from '../utils/constants.js';
 
 // Registrar componentes de Chart.js
-Chart.register(ArcElement, Tooltip, Legend);
+Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
 
 const GraficoCategorias = ({ gastosPorCategoria }) => {
   const chartRef = useRef(null);
