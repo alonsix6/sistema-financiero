@@ -622,149 +622,187 @@ const Dashboard = ({ userData, onUpdateData }) => {
   const textClass = darkMode ? 'text-white' : 'text-gray-800';
   const textSecondaryClass = darkMode ? 'text-gray-400' : 'text-gray-600';
 
+  // Estado para filtro colapsable
+  const [filterExpanded, setFilterExpanded] = useState(false);
+
+  // Formatear fecha para mostrar
+  const formatDateRange = () => {
+    const inicio = new Date(fechaInicio + 'T12:00:00');
+    const fin = new Date(fechaFin + 'T12:00:00');
+    const opts = { day: 'numeric', month: 'short' };
+    return `${inicio.toLocaleDateString('es-PE', opts)} - ${fin.toLocaleDateString('es-PE', opts)}`;
+  };
+
+  // Tabs con iconos y labels cortos para móvil
+  const navTabs = [
+    { id: 'inicio', label: 'Inicio', icon: Home },
+    { id: 'tarjetas', label: 'Tarjetas', icon: CreditCard },
+    { id: 'transacciones', label: 'Movimientos', icon: Receipt },
+    { id: 'metas', label: 'Metas', icon: Target },
+    { id: 'más', label: 'Más', icon: Settings }
+  ];
+
+  // Tabs secundarios (se muestran al seleccionar "Más")
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const moreTabs = [
+    { id: 'cuotas', label: 'Cuotas', icon: Calendar },
+    { id: 'inversiones', label: 'Inversiones', icon: TrendingUp },
+    { id: 'proyección', label: 'Proyección', icon: LineChart },
+    { id: 'recurrencias', label: 'Recurrencias', icon: Repeat }
+  ];
+
   return (
-    <div className={`min-h-screen ${bgClass} transition-colors duration-200`}>
-      {/* Header */}
-      <header className={`${cardClass} border-b sticky top-0 z-40 transition-colors`}>
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+    <div className={`min-h-screen ${bgClass} transition-colors duration-200 pb-20`}>
+      {/* Header Compacto - Estilo iOS */}
+      <header className={`${cardClass} sticky top-0 z-40 transition-colors safe-area-inset-top`}>
+        <div className="px-4 py-3 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="bg-blue-500 w-12 h-12 rounded-xl flex items-center justify-center">
-              <span className="text-white text-2xl font-bold">₪</span>
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
+              <Wallet size={20} className="text-white" />
             </div>
             <div>
-              <h1 className={`text-xl font-bold ${textClass}`}>Mis Finanzas</h1>
-              <p className={`text-xs ${textSecondaryClass}`}>v3.1 Pago Tarjetas</p>
+              <h1 className={`text-lg font-bold ${textClass}`}>Mis Finanzas</h1>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className={`p-2.5 rounded-xl transition-all ${
-                darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
+              className={`p-2 rounded-full transition-all ${
+                darkMode ? 'bg-gray-700 active:bg-gray-600' : 'bg-gray-100 active:bg-gray-200'
               }`}
             >
-              {darkMode ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-gray-600" />}
+              {darkMode ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-gray-500" />}
             </button>
             <button
               onClick={() => confirm('¿Cerrar sesión?') && window.location.reload()}
-              className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl"
+              className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 active:bg-gray-600' : 'bg-gray-100 active:bg-gray-200'}`}
             >
-              Salir
+              <LogOut size={18} className="text-red-500" />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Navigation Tabs */}
-      <div className={`${cardClass} border-b sticky top-16 z-30 transition-colors`}>
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 nav-tabs flex gap-1 overflow-x-auto scrollbar-hide">
-          {[
-            { id: 'inicio', label: 'Inicio', icon: Home },
-            { id: 'tarjetas', label: 'Tarjetas', icon: CreditCard },
-            { id: 'transacciones', label: 'Movimientos', icon: Receipt },
-            { id: 'cuotas', label: 'Cuotas', icon: Calendar },
-            { id: 'inversiones', label: 'Inversiones', icon: TrendingUp },
-            { id: 'metas', label: 'Metas', icon: Target },
-            { id: 'proyección', label: 'Proyección', icon: LineChart },
-            { id: 'recurrencias', label: 'Recurrencias', icon: Repeat }
-          ].map(tab => {
-            const IconComponent = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-3 sm:px-6 py-3 sm:py-4 font-medium whitespace-nowrap flex items-center gap-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'text-blue-600 border-b-2 border-blue-600'
-                    : textSecondaryClass
-                }`}
-              >
-                <IconComponent size={18} />
-                <span className="hidden sm:inline">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      {/* Main Content con padding para bottom nav */}
+      <main className="px-4 py-4 space-y-4 max-w-lg mx-auto">
         {/* Vista Inicio */}
         {activeTab === 'inicio' && (
-          <div className="space-y-8">
-            {/* Filtro de Período */}
-            <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
-              <h3 className={`text-lg font-bold mb-4 ${textClass}`}>Filtrar Período</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${textSecondaryClass}`}>Fecha Inicio</label>
-                  <input
-                    type="date"
-                    value={fechaInicio}
-                    onChange={(e) => setFechaInicio(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${textSecondaryClass}`}>Fecha Fin</label>
-                  <input
-                    type="date"
-                    value={fechaFin}
-                    onChange={(e) => setFechaFin(e.target.value)}
-                    max={new Date().toISOString().split('T')[0]}
-                    className="w-full px-4 py-2 border rounded-xl"
-                  />
-                </div>
-                <div className="flex items-end">
-                  <button
-                    onClick={() => {
-                      const hoy = new Date();
-                      const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-                      setFechaInicio(primerDia.toISOString().split('T')[0]);
-                      setFechaFin(hoy.toISOString().split('T')[0]);
-                    }}
-                    className="w-full px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600"
-                  >
-                    Este Mes
-                  </button>
-                </div>
+          <div className="space-y-4">
+            {/* Card Principal - Efectivo Disponible (Hero Card) */}
+            <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-3xl shadow-xl p-6 text-white">
+              <div className="flex justify-between items-start mb-2">
+                <p className="text-sm opacity-80 font-medium">Efectivo Disponible</p>
+                <Wallet size={24} className="opacity-80" />
               </div>
+              <p className="text-4xl font-bold tracking-tight mb-1">S/ {efectivoDisponible.toFixed(2)}</p>
+              <p className="text-xs opacity-70">Saldo en efectivo real</p>
             </div>
 
-            {/* Resumen del Período */}
-            <div>
-              <h2 className={`text-lg font-bold mb-4 ${textClass}`}>Resumen del Período Seleccionado</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
-                <div className={`${cardClass} rounded-2xl shadow-lg p-6 card-hover`}>
-                  <p className={`text-sm mb-2 ${textSecondaryClass}`}>Ingresos</p>
-                  <p className="text-3xl font-bold text-green-600">S/ {resumen.ingresos.toFixed(2)}</p>
+            {/* Filtro de Período - Colapsable */}
+            <div className={`${cardClass} rounded-2xl shadow-sm overflow-hidden`}>
+              <button
+                onClick={() => setFilterExpanded(!filterExpanded)}
+                className={`w-full px-4 py-3 flex items-center justify-between ${textClass}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Calendar size={18} className="text-blue-500" />
+                  <span className="font-medium text-sm">{formatDateRange()}</span>
                 </div>
-                <div className={`${cardClass} rounded-2xl shadow-lg p-6 card-hover`}>
-                  <p className={`text-sm mb-2 ${textSecondaryClass}`}>Gastos</p>
-                  <p className="text-3xl font-bold text-red-600">S/ {resumen.gastos.toFixed(2)}</p>
+                <ChevronRight size={18} className={`${textSecondaryClass} transition-transform ${filterExpanded ? 'rotate-90' : ''}`} />
+              </button>
+              {filterExpanded && (
+                <div className="px-4 pb-4 space-y-3 border-t border-gray-100 dark:border-gray-700">
+                  <div className="grid grid-cols-2 gap-3 pt-3">
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${textSecondaryClass}`}>Desde</label>
+                      <input
+                        type="date"
+                        value={fechaInicio}
+                        onChange={(e) => setFechaInicio(e.target.value)}
+                        className={`w-full px-3 py-2 text-sm border rounded-xl ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-200'}`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${textSecondaryClass}`}>Hasta</label>
+                      <input
+                        type="date"
+                        value={fechaFin}
+                        onChange={(e) => setFechaFin(e.target.value)}
+                        max={new Date().toISOString().split('T')[0]}
+                        className={`w-full px-3 py-2 text-sm border rounded-xl ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-200'}`}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const hoy = new Date();
+                        const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+                        setFechaInicio(primerDia.toISOString().split('T')[0]);
+                        setFechaFin(hoy.toISOString().split('T')[0]);
+                        setFilterExpanded(false);
+                      }}
+                      className="flex-1 px-3 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl active:bg-blue-600"
+                    >
+                      Este Mes
+                    </button>
+                    <button
+                      onClick={() => {
+                        const hoy = new Date();
+                        const hace30 = new Date(hoy);
+                        hace30.setDate(hace30.getDate() - 30);
+                        setFechaInicio(hace30.toISOString().split('T')[0]);
+                        setFechaFin(hoy.toISOString().split('T')[0]);
+                        setFilterExpanded(false);
+                      }}
+                      className={`flex-1 px-3 py-2 text-sm font-medium rounded-xl ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-700'}`}
+                    >
+                      30 días
+                    </button>
+                  </div>
                 </div>
-                <div className={`${cardClass} rounded-2xl shadow-lg p-6 card-hover`}>
-                  <p className={`text-sm mb-2 ${textSecondaryClass}`}>Balance</p>
-                  <p className={`text-3xl font-bold ${resumen.balance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
-                    S/ {resumen.balance.toFixed(2)}
-                  </p>
-                </div>
-                <div className={`${cardClass} rounded-2xl shadow-lg p-6 card-hover`}>
-                  <p className={`text-sm mb-2 ${textSecondaryClass}`}>Ahorro</p>
-                  <p className="text-3xl font-bold text-blue-600">{resumen.tasaAhorro}%</p>
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Efectivo Disponible */}
-            <div>
-              <h2 className={`text-lg font-bold mb-4 ${textClass}`}>Efectivo Disponible</h2>
-              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-8 text-white">
-                <p className="text-sm opacity-80 mb-2">Dinero que puedes mover ahora</p>
-                <p className="text-5xl font-bold mb-3">S/ {efectivoDisponible.toFixed(2)}</p>
-                <p className="text-xs opacity-80">
-                  Este es tu saldo real en efectivo (ingresos - gastos en efectivo - pagos de tarjetas)
+            {/* Resumen Compacto - Grid 2x2 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className={`${cardClass} rounded-2xl p-4 shadow-sm`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                    <TrendingUp size={16} className="text-green-600" />
+                  </div>
+                </div>
+                <p className={`text-xs ${textSecondaryClass}`}>Ingresos</p>
+                <p className="text-xl font-bold text-green-600">S/ {resumen.ingresos.toFixed(0)}</p>
+              </div>
+              <div className={`${cardClass} rounded-2xl p-4 shadow-sm`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <TrendingDown size={16} className="text-red-600" />
+                  </div>
+                </div>
+                <p className={`text-xs ${textSecondaryClass}`}>Gastos</p>
+                <p className="text-xl font-bold text-red-600">S/ {resumen.gastos.toFixed(0)}</p>
+              </div>
+              <div className={`${cardClass} rounded-2xl p-4 shadow-sm`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className={`w-8 h-8 rounded-full ${resumen.balance >= 0 ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-orange-100 dark:bg-orange-900/30'} flex items-center justify-center`}>
+                    <DollarSign size={16} className={resumen.balance >= 0 ? 'text-blue-600' : 'text-orange-600'} />
+                  </div>
+                </div>
+                <p className={`text-xs ${textSecondaryClass}`}>Balance</p>
+                <p className={`text-xl font-bold ${resumen.balance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                  S/ {resumen.balance.toFixed(0)}
                 </p>
+              </div>
+              <div className={`${cardClass} rounded-2xl p-4 shadow-sm`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                    <Percent size={16} className="text-purple-600" />
+                  </div>
+                </div>
+                <p className={`text-xs ${textSecondaryClass}`}>Ahorro</p>
+                <p className="text-xl font-bold text-purple-600">{resumen.tasaAhorro}%</p>
               </div>
             </div>
 
@@ -1005,19 +1043,21 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
         {/* Vista Transacciones */}
         {activeTab === 'transacciones' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className={`text-2xl font-bold ${textClass}`}>Movimientos</h2>
-              <div className="flex gap-3">
+          <div className="space-y-4">
+            {/* Header con botones compactos */}
+            <div className="flex items-center justify-between">
+              <h2 className={`text-xl font-bold ${textClass}`}>Movimientos</h2>
+              <div className="flex gap-2">
                 <button
                   onClick={() => {
                     setTipoTransaccion('Gasto');
                     setTransaccionEditar(null);
                     setModalTransaccion(true);
                   }}
-                  className="px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-red-500 text-white text-sm font-medium rounded-xl active:bg-red-600"
                 >
-                  Nuevo Gasto
+                  <Minus size={16} />
+                  <span className="hidden sm:inline">Gasto</span>
                 </button>
                 <button
                   onClick={() => {
@@ -1025,18 +1065,19 @@ const Dashboard = ({ userData, onUpdateData }) => {
                     setTransaccionEditar(null);
                     setModalTransaccion(true);
                   }}
-                  className="px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-green-500 text-white text-sm font-medium rounded-xl active:bg-green-600"
                 >
-                  Nuevo Ingreso
+                  <Plus size={16} />
+                  <span className="hidden sm:inline">Ingreso</span>
                 </button>
               </div>
             </div>
 
             {userData.transacciones.length === 0 ? (
-              <div className={`${cardClass} rounded-2xl shadow-lg p-12 text-center`}>
-                <BarChart3 size={64} className="mx-auto mb-4 text-gray-400" />
-                <h3 className={`text-xl font-bold mb-2 ${textClass}`}>No hay transacciones</h3>
-                <p className={textSecondaryClass}>Comienza registrando tus movimientos</p>
+              <div className={`${cardClass} rounded-2xl shadow-sm p-8 text-center`}>
+                <BarChart3 size={48} className="mx-auto mb-3 text-gray-300" />
+                <h3 className={`text-lg font-bold mb-1 ${textClass}`}>Sin movimientos</h3>
+                <p className={`text-sm ${textSecondaryClass}`}>Registra tu primer ingreso o gasto</p>
               </div>
             ) : (
               <>
@@ -1639,7 +1680,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
         {activeTab === 'recurrencias' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className={`text-2xl font-bold ${textClass}`}>⚙️ Pagos e Ingresos Recurrentes</h2>
+              <h2 className={`text-2xl font-bold ${textClass}`}>Pagos e Ingresos Recurrentes</h2>
               <button
                 onClick={() => {
                   setRecurrenciaEditar(null);
@@ -1850,31 +1891,93 @@ const Dashboard = ({ userData, onUpdateData }) => {
         )}
       </Modal>
 
-      {/* Botones Flotantes Móviles */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-3 lg:hidden z-30 safe-area-inset-bottom">
-        <button
-          onClick={() => {
-            setTipoTransaccion('Gasto');
-            setTransaccionEditar(null);
-            setModalTransaccion(true);
-          }}
-          className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform"
-          aria-label="Registrar gasto"
-        >
-          <Minus size={24} />
-        </button>
-        <button
-          onClick={() => {
-            setTipoTransaccion('Ingreso');
-            setTransaccionEditar(null);
-            setModalTransaccion(true);
-          }}
-          className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform"
-          aria-label="Registrar ingreso"
-        >
-          <Plus size={24} />
-        </button>
-      </div>
+      {/* Bottom Navigation - Estilo iOS */}
+      <nav className={`fixed bottom-0 left-0 right-0 ${cardClass} border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} z-40 safe-area-inset-bottom`}>
+        <div className="max-w-lg mx-auto px-2 py-2 flex justify-around items-center">
+          {navTabs.map(tab => {
+            const IconComponent = tab.icon;
+            const isActive = activeTab === tab.id || (tab.id === 'más' && moreTabs.some(t => t.id === activeTab));
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  if (tab.id === 'más') {
+                    setShowMoreMenu(!showMoreMenu);
+                  } else {
+                    setActiveTab(tab.id);
+                    setShowMoreMenu(false);
+                  }
+                }}
+                className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all min-w-[64px] ${
+                  isActive
+                    ? 'text-blue-600'
+                    : textSecondaryClass
+                }`}
+              >
+                <IconComponent size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <span className={`text-[10px] mt-1 font-medium ${isActive ? 'text-blue-600' : ''}`}>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Menú "Más" expandible */}
+        {showMoreMenu && (
+          <div className={`absolute bottom-full left-0 right-0 ${cardClass} border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} shadow-lg animate-slide-in-bottom`}>
+            <div className="max-w-lg mx-auto px-4 py-3 grid grid-cols-4 gap-2">
+              {moreTabs.map(tab => {
+                const IconComponent = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setShowMoreMenu(false);
+                    }}
+                    className={`flex flex-col items-center justify-center py-3 px-2 rounded-xl transition-all ${
+                      isActive
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600'
+                        : `${darkMode ? 'bg-gray-700' : 'bg-gray-100'} ${textSecondaryClass}`
+                    }`}
+                  >
+                    <IconComponent size={22} />
+                    <span className="text-[10px] mt-1 font-medium">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* FAB Central - Solo en inicio */}
+      {activeTab === 'inicio' && (
+        <div className="fixed bottom-20 right-4 z-30 flex flex-col gap-2 safe-area-inset-bottom">
+          <button
+            onClick={() => {
+              setTipoTransaccion('Gasto');
+              setTransaccionEditar(null);
+              setModalTransaccion(true);
+            }}
+            className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+            aria-label="Registrar gasto"
+          >
+            <Minus size={20} />
+          </button>
+          <button
+            onClick={() => {
+              setTipoTransaccion('Ingreso');
+              setTransaccionEditar(null);
+              setModalTransaccion(true);
+            }}
+            className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+            aria-label="Registrar ingreso"
+          >
+            <Plus size={20} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
