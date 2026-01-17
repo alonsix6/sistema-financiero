@@ -34,7 +34,7 @@ const SeccionCuotas = lazy(() => import('./SeccionCuotas.jsx'));
 // Componente de loading
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center py-8">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
   </div>
 );
 
@@ -652,12 +652,12 @@ const Dashboard = ({ userData, onUpdateData }) => {
   ];
 
   return (
-    <div className={`min-h-screen ${bgClass} transition-colors duration-200 pb-20`}>
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-b from-gradient-start via-gradient-mid to-gradient-end'} transition-colors duration-200 pb-20`}>
       {/* Header Compacto - Estilo iOS */}
-      <header className={`${cardClass} sticky top-0 z-40 transition-colors safe-area-inset-top`}>
+      <header className={`sticky top-0 z-40 transition-colors safe-area-inset-top backdrop-blur-lg ${darkMode ? 'bg-gray-800/90' : 'bg-white/80'}`}>
         <div className="px-4 py-3 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="bg-gradient-to-br from-accent to-accent-light w-10 h-10 rounded-xl flex items-center justify-center shadow-glow">
               <Wallet size={20} className="text-white" />
             </div>
             <div>
@@ -668,16 +668,16 @@ const Dashboard = ({ userData, onUpdateData }) => {
             <button
               onClick={() => setDarkMode(!darkMode)}
               className={`p-2 rounded-full transition-all ${
-                darkMode ? 'bg-gray-700 active:bg-gray-600' : 'bg-gray-100 active:bg-gray-200'
+                darkMode ? 'bg-gray-700 active:bg-gray-600' : 'bg-white/60 active:bg-white/80 shadow-sm'
               }`}
             >
               {darkMode ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-gray-500" />}
             </button>
             <button
               onClick={() => confirm('¿Cerrar sesión?') && window.location.reload()}
-              className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 active:bg-gray-600' : 'bg-gray-100 active:bg-gray-200'}`}
+              className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 active:bg-gray-600' : 'bg-white/60 active:bg-white/80 shadow-sm'}`}
             >
-              <LogOut size={18} className="text-red-500" />
+              <LogOut size={18} className="text-accent" />
             </button>
           </div>
         </div>
@@ -689,23 +689,27 @@ const Dashboard = ({ userData, onUpdateData }) => {
         {activeTab === 'inicio' && (
           <div className="space-y-4">
             {/* Card Principal - Efectivo Disponible (Hero Card) */}
-            <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-3xl shadow-xl p-6 text-white">
-              <div className="flex justify-between items-start mb-2">
-                <p className="text-sm opacity-80 font-medium">Efectivo Disponible</p>
-                <Wallet size={24} className="opacity-80" />
+            <div className="bg-gradient-to-br from-accent via-accent to-accent-light rounded-3xl shadow-xl p-6 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-2">
+                  <p className="text-sm opacity-90 font-medium">Efectivo Disponible</p>
+                  <Wallet size={24} className="opacity-80" />
+                </div>
+                <p className="text-4xl font-bold tracking-tight mb-1">S/ {efectivoDisponible.toFixed(2)}</p>
+                <p className="text-xs opacity-80">Saldo en efectivo real</p>
               </div>
-              <p className="text-4xl font-bold tracking-tight mb-1">S/ {efectivoDisponible.toFixed(2)}</p>
-              <p className="text-xs opacity-70">Saldo en efectivo real</p>
             </div>
 
             {/* Filtro de Período - Colapsable */}
-            <div className={`${cardClass} rounded-2xl shadow-sm overflow-hidden`}>
+            <div className={`${cardClass} rounded-2xl shadow-sm overflow-hidden ${darkMode ? '' : 'bg-white/80 backdrop-blur-sm'}`}>
               <button
                 onClick={() => setFilterExpanded(!filterExpanded)}
                 className={`w-full px-4 py-3 flex items-center justify-between ${textClass}`}
               >
                 <div className="flex items-center gap-3">
-                  <Calendar size={18} className="text-blue-500" />
+                  <Calendar size={18} className="text-accent" />
                   <span className="font-medium text-sm">{formatDateRange()}</span>
                 </div>
                 <ChevronRight size={18} className={`${textSecondaryClass} transition-transform ${filterExpanded ? 'rotate-90' : ''}`} />
@@ -742,7 +746,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                         setFechaFin(hoy.toISOString().split('T')[0]);
                         setFilterExpanded(false);
                       }}
-                      className="flex-1 px-3 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl active:bg-blue-600"
+                      className="flex-1 px-3 py-2 bg-accent text-white text-sm font-medium rounded-xl active:bg-accent-dark"
                     >
                       Este Mes
                     </button>
@@ -766,7 +770,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
             {/* Resumen Compacto - Grid 2x2 */}
             <div className="grid grid-cols-2 gap-3">
-              <div className={`${cardClass} rounded-2xl p-4 shadow-sm`}>
+              <div className={`rounded-2xl p-4 shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white/80 backdrop-blur-sm'}`}>
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
                     <TrendingUp size={16} className="text-green-600" />
@@ -775,34 +779,34 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 <p className={`text-xs ${textSecondaryClass}`}>Ingresos</p>
                 <p className="text-xl font-bold text-green-600">S/ {resumen.ingresos.toFixed(0)}</p>
               </div>
-              <div className={`${cardClass} rounded-2xl p-4 shadow-sm`}>
+              <div className={`rounded-2xl p-4 shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white/80 backdrop-blur-sm'}`}>
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                    <TrendingDown size={16} className="text-red-600" />
+                  <div className="w-8 h-8 rounded-full bg-expense/10 flex items-center justify-center">
+                    <TrendingDown size={16} className="text-expense" />
                   </div>
                 </div>
                 <p className={`text-xs ${textSecondaryClass}`}>Gastos</p>
-                <p className="text-xl font-bold text-red-600">S/ {resumen.gastos.toFixed(0)}</p>
+                <p className="text-xl font-bold text-expense">S/ {resumen.gastos.toFixed(0)}</p>
               </div>
-              <div className={`${cardClass} rounded-2xl p-4 shadow-sm`}>
+              <div className={`rounded-2xl p-4 shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white/80 backdrop-blur-sm'}`}>
                 <div className="flex items-center gap-2 mb-1">
-                  <div className={`w-8 h-8 rounded-full ${resumen.balance >= 0 ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-orange-100 dark:bg-orange-900/30'} flex items-center justify-center`}>
-                    <DollarSign size={16} className={resumen.balance >= 0 ? 'text-blue-600' : 'text-orange-600'} />
+                  <div className={`w-8 h-8 rounded-full ${resumen.balance >= 0 ? 'bg-income/10' : 'bg-orange-100 dark:bg-orange-900/30'} flex items-center justify-center`}>
+                    <DollarSign size={16} className={resumen.balance >= 0 ? 'text-income' : 'text-orange-600'} />
                   </div>
                 </div>
                 <p className={`text-xs ${textSecondaryClass}`}>Balance</p>
-                <p className={`text-xl font-bold ${resumen.balance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                <p className={`text-xl font-bold ${resumen.balance >= 0 ? 'text-income' : 'text-orange-600'}`}>
                   S/ {resumen.balance.toFixed(0)}
                 </p>
               </div>
-              <div className={`${cardClass} rounded-2xl p-4 shadow-sm`}>
+              <div className={`rounded-2xl p-4 shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white/80 backdrop-blur-sm'}`}>
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                    <Percent size={16} className="text-purple-600" />
+                  <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
+                    <Percent size={16} className="text-accent" />
                   </div>
                 </div>
                 <p className={`text-xs ${textSecondaryClass}`}>Ahorro</p>
-                <p className="text-xl font-bold text-purple-600">{resumen.tasaAhorro}%</p>
+                <p className="text-xl font-bold text-accent">{resumen.tasaAhorro}%</p>
               </div>
             </div>
 
@@ -810,7 +814,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
             <div>
               <h2 className={`text-lg font-bold mb-4 ${textClass}`}>Cashflow Total (Todo el Histórico)</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
+                <div className="bg-gradient-to-br from-income to-green-600 rounded-2xl shadow-lg p-6 text-white">
                   <p className="text-sm opacity-80 mb-1">Total Ingresos</p>
                   <p className="text-3xl font-bold">S/ {cashflowTotal.ingresosTotal.toFixed(2)}</p>
                 </div>
@@ -860,7 +864,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                             setTarjetaPagar(tarjeta);
                             setModalPagoTarjeta(true);
                           }}
-                          className="text-sm text-blue-600 hover:text-blue-800 font-medium mt-1"
+                          className="text-sm text-accent hover:text-accent/80 font-medium mt-1"
                         >
                           Tarjeta: Pagar
                         </button>
@@ -893,7 +897,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 }}
                 className={`${cardClass} rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all text-center`}
               >
-                <Wallet size={40} className="mx-auto mb-2 text-blue-500" />
+                <Wallet size={40} className="mx-auto mb-2 text-accent" />
                 <p className={`font-semibold ${textClass}`}>Registrar Gasto</p>
               </button>
               <button
@@ -921,7 +925,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                   setTarjetaEditar(null);
                   setModalTarjeta(true);
                 }}
-                className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600"
+                className="px-6 py-3 bg-accent text-white rounded-xl hover:bg-accent/90"
               >
                 Nueva Tarjeta
               </button>
@@ -934,7 +938,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 <p className={`mb-6 ${textSecondaryClass}`}>Agrega tu primera tarjeta</p>
                 <button
                   onClick={() => setModalTarjeta(true)}
-                  className="px-8 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600"
+                  className="px-8 py-3 bg-accent text-white rounded-xl hover:bg-accent/90"
                 >
                   Agregar Tarjeta
                 </button>
@@ -1129,7 +1133,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                           <tr key={t.id} className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
                             <td className={`px-6 py-4 whitespace-nowrap text-sm ${textSecondaryClass}`}>
                               {fechaLocal.toLocaleDateString('es-PE')}
-                              {t.esRecurrente && <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">♻️</span>}
+                              {t.esRecurrente && <span className="ml-2 text-xs bg-accent/10 text-accent px-2 py-1 rounded">♻️</span>}
                               {t.tipo === 'PagoTarjeta' && !t.esPagoAdelantado && <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded flex items-center gap-1"><CreditCard size={12} /></span>}
                               {t.esCuotas && (
                                 <span className={`ml-2 text-xs px-2 py-1 rounded font-semibold ${
@@ -1197,7 +1201,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                                     setTransaccionEditar(t);
                                     setModalTransaccion(true);
                                   }}
-                                  className="text-blue-600 hover:text-blue-800 mr-3"
+                                  className="text-accent hover:text-accent/80 mr-3"
                                   title="Editar"
                                 >
                                   ✏️
@@ -1228,7 +1232,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                           paginaActual === 1
                             ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                            : 'bg-accent text-white hover:bg-accent/90'
                         }`}
                       >
                         ← Anterior
@@ -1246,7 +1250,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                               <button
                                 key={1}
                                 onClick={() => setPaginaActual(1)}
-                                className="px-3 py-1 rounded-lg hover:bg-blue-100 text-sm"
+                                className="px-3 py-1 rounded-lg hover:bg-accent/10 text-sm"
                               >
                                 1
                               </button>
@@ -1264,8 +1268,8 @@ const Dashboard = ({ userData, onUpdateData }) => {
                                 onClick={() => setPaginaActual(i)}
                                 className={`px-3 py-1 rounded-lg text-sm ${
                                   i === paginaActual
-                                    ? 'bg-blue-500 text-white font-bold'
-                                    : 'hover:bg-blue-100'
+                                    ? 'bg-accent text-white font-bold'
+                                    : 'hover:bg-accent/10'
                                 }`}
                               >
                                 {i}
@@ -1282,7 +1286,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                               <button
                                 key={totalPaginas}
                                 onClick={() => setPaginaActual(totalPaginas)}
-                                className="px-3 py-1 rounded-lg hover:bg-blue-100 text-sm"
+                                className="px-3 py-1 rounded-lg hover:bg-accent/10 text-sm"
                               >
                                 {totalPaginas}
                               </button>
@@ -1299,7 +1303,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                           paginaActual >= Math.ceil(userData.transacciones.length / transaccionesPorPagina)
                             ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                            : 'bg-accent text-white hover:bg-accent/90'
                         }`}
                       >
                         Siguiente →
@@ -1359,8 +1363,8 @@ const Dashboard = ({ userData, onUpdateData }) => {
             </div>
 
             <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-                <p className="text-sm text-blue-800">
+              <div className="bg-accent/5 border border-accent/20 rounded-xl p-4 mb-6">
+                <p className="text-sm text-accent">
                   <Info size={14} className="inline" /> <strong>Nota importante:</strong> Esta proyección usa tu <strong>efectivo disponible</strong> como base (S/ {proyeccion.saldoInicial.toFixed(2)}). Solo considera movimientos en efectivo: ingresos recurrentes y pagos de tarjetas programados.
                 </p>
               </div>
@@ -1392,7 +1396,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-gray-800">{e.descripcion}</p>
-                          {e.recurrente && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">♻️ Auto</span>}
+                          {e.recurrente && <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded">♻️ Auto</span>}
                           {e.esCuota && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold">Tarjeta: Cuota</span>}
                         </div>
                         <p className="text-sm text-gray-600 mt-1">
@@ -1440,7 +1444,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                   setMetaEditar(null);
                   setModalMeta(true);
                 }}
-                className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600"
+                className="px-6 py-3 bg-accent text-white rounded-xl hover:bg-accent/90"
               >
                 Nueva Meta
               </button>
@@ -1455,7 +1459,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                   Efectivo - Deudas - Dinero en metas
                 </p>
               </div>
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
+              <div className="bg-gradient-to-br from-accent to-accent-light rounded-2xl shadow-lg p-6 text-white">
                 <p className="text-sm opacity-80 mb-1">Cashflow Promedio (3 meses)</p>
                 <p className="text-3xl font-bold mb-2">S/ {cashflowPromedio.cashflowNeto.toFixed(2)}</p>
                 <p className="text-xs opacity-80">
@@ -1474,8 +1478,8 @@ const Dashboard = ({ userData, onUpdateData }) => {
             </div>
 
             {/* Explicación */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-sm text-blue-800">
+            <div className="bg-accent/5 border border-accent/20 rounded-xl p-4">
+              <p className="text-sm text-accent">
                 <Info size={14} className="inline" />  <strong>¿Cómo funciona?</strong> El "Disponible para Ahorrar" considera tu efectivo actual menos las deudas de tarjetas y el dinero ya asignado en otras metas. Esto te muestra cuánto dinero real puedes destinar a nuevas metas sin comprometer tus obligaciones.
               </p>
             </div>
@@ -1490,7 +1494,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 </p>
                 <button
                   onClick={() => setModalMeta(true)}
-                  className="px-8 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600"
+                  className="px-8 py-3 bg-accent text-white rounded-xl hover:bg-accent/90"
                 >
                   Crear Primera Meta
                 </button>
@@ -1664,7 +1668,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                             setMetaEditar(meta);
                             setModalMeta(true);
                           }}
-                          className="text-blue-600 hover:text-blue-800 font-medium"
+                          className="text-accent hover:text-accent/80 font-medium"
                         >
                           Editar
                         </button>
@@ -1686,15 +1690,15 @@ const Dashboard = ({ userData, onUpdateData }) => {
                   setRecurrenciaEditar(null);
                   setModalRecurrencia(true);
                 }}
-                className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600"
+                className="px-6 py-3 bg-accent text-white rounded-xl hover:bg-accent/90"
               >
                 Nueva Recurrencia
               </button>
             </div>
 
             <div className={`${cardClass} rounded-2xl shadow-lg p-6`}>
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-                <p className="text-sm text-blue-800">
+              <div className="bg-accent/5 border border-accent/20 rounded-xl p-4 mb-6">
+                <p className="text-sm text-accent">
                   <Info size={14} className="inline" />  <strong>Nota:</strong> Las recurrencias se registran automáticamente cuando llega la fecha configurada. No necesitas agregarlas manualmente para evitar duplicados.
                 </p>
               </div>
@@ -1706,7 +1710,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                   <p className={`mb-6 ${textSecondaryClass}`}>Agrega salarios, suscripciones y otros pagos automáticos</p>
                   <button
                     onClick={() => setModalRecurrencia(true)}
-                    className="px-8 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600"
+                    className="px-8 py-3 bg-accent text-white rounded-xl hover:bg-accent/90"
                   >
                     Crear Primera Recurrencia
                   </button>
@@ -1720,7 +1724,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                       <div
                         key={rec.id}
                         className={`${cardClass} rounded-xl border-2 p-6 ${
-                          rec.activo ? 'border-blue-200' : 'border-gray-200 opacity-60'
+                          rec.activo ? 'border-accent/20' : 'border-gray-200 opacity-60'
                         }`}
                       >
                         <div className="flex justify-between items-start mb-4">
@@ -1764,7 +1768,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                             setRecurrenciaEditar(rec);
                             setModalRecurrencia(true);
                           }}
-                          className="w-full py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-medium transition-colors"
+                          className="w-full py-2.5 bg-accent/5 hover:bg-accent/10 text-accent rounded-lg font-medium transition-colors"
                         >
                           ✏️ Editar
                         </button>
@@ -1910,12 +1914,12 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 }}
                 className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all min-w-[64px] ${
                   isActive
-                    ? 'text-blue-600'
+                    ? 'text-accent'
                     : textSecondaryClass
                 }`}
               >
                 <IconComponent size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span className={`text-[10px] mt-1 font-medium ${isActive ? 'text-blue-600' : ''}`}>{tab.label}</span>
+                <span className={`text-[10px] mt-1 font-medium ${isActive ? 'text-accent' : ''}`}>{tab.label}</span>
               </button>
             );
           })}
@@ -1937,7 +1941,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                     }}
                     className={`flex flex-col items-center justify-center py-3 px-2 rounded-xl transition-all ${
                       isActive
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600'
+                        ? 'bg-accent/10 dark:bg-accent/20 text-accent'
                         : `${darkMode ? 'bg-gray-700' : 'bg-gray-100'} ${textSecondaryClass}`
                     }`}
                   >

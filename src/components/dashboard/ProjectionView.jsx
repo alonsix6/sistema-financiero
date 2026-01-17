@@ -141,10 +141,10 @@ const ProjectionView = ({
                       {/* Card Payments */}
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <Icons.CreditCard size={14} className="text-blue-500" />
+                          <Icons.CreditCard size={14} className="text-accent" />
                           <span className="text-xs text-gray-500 dark:text-gray-400">Tarjetas</span>
                         </div>
-                        <p className="font-semibold text-blue-600 dark:text-blue-400">
+                        <p className="font-semibold text-accent dark:text-accent-light">
                           -{formatCurrency(mes.pagos)}
                         </p>
                       </div>

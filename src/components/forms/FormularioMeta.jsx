@@ -57,7 +57,7 @@ const FormularioMeta = ({ meta, onSave, onDelete, onClose }) => {
                 onClick={() => setFormData({ ...formData, categoria: cat.valor })}
                 className={`p-4 rounded-xl border-2 transition-all ${
                   formData.categoria === cat.valor
-                    ? 'border-blue-500 bg-blue-50 shadow-md'
+                    ? 'border-accent bg-accent/10 shadow-md'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
@@ -133,7 +133,7 @@ const FormularioMeta = ({ meta, onSave, onDelete, onClose }) => {
             id="activa"
             checked={formData.activa}
             onChange={(e) => setFormData({ ...formData, activa: e.target.checked })}
-            className="w-5 h-5 text-blue-600 rounded"
+            className="w-5 h-5 text-accent rounded"
           />
           <label htmlFor="activa" className="text-sm font-medium text-gray-700 cursor-pointer">
             Meta activa (si la desactivas, no se mostrará en el dashboard)
@@ -199,7 +199,7 @@ const FormularioMeta = ({ meta, onSave, onDelete, onClose }) => {
         </button>
         <button
           type="submit"
-          className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600"
+          className="flex-1 px-6 py-3 bg-accent text-white rounded-xl hover:bg-accent/90"
         >
           {meta ? 'Actualizar' : 'Crear Meta'}
         </button>

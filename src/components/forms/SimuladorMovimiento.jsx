@@ -25,8 +25,8 @@ const SimuladorMovimiento = ({ proyeccion, onSimular, onCerrar, tarjetas }) => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <p className="text-sm text-blue-800">
+      <div className="bg-accent/10 border border-accent/20 rounded-xl p-4">
+        <p className="text-sm text-accent">
           Este simulador te muestra cómo afectaría un movimiento futuro a tu proyección. Los gastos en efectivo afectan inmediatamente. Los gastos con tarjeta afectan en la fecha de pago según el cierre.
         </p>
       </div>

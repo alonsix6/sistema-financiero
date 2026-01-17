@@ -224,7 +224,7 @@ const FormularioTransaccion = ({ tipo, tarjetas, onSave, onClose, transaccionEdi
               )}
 
               {formData.pagarEnCuotas && (
-                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl space-y-4">
+                <div className="mt-4 p-4 bg-accent/10 dark:bg-accent/20 rounded-xl space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Numero de cuotas:</label>
                     <div className="grid grid-cols-4 gap-2">
@@ -261,7 +261,7 @@ const FormularioTransaccion = ({ tipo, tarjetas, onSave, onClose, transaccionEdi
                     }
 
                     return (
-                      <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-blue-200 dark:border-blue-800">
+                      <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-accent/20 dark:border-accent/30">
                         <p className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
                           <Icons.BarChart3 size={16} className="text-accent" />
                           Vista Previa de Cuotas

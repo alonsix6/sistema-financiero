@@ -70,7 +70,7 @@ const TransactionsView = ({
       return { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-600 dark:text-green-400' };
     }
     if (transaccion.tipo === 'PagoTarjeta') {
-      return { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400' };
+      return { bg: 'bg-accent/10 dark:bg-accent/20', text: 'text-accent dark:text-accent-light' };
     }
     const categoria = CATEGORIAS.find(c => c.valor === transaccion.categoria);
     return {
@@ -89,7 +89,7 @@ const TransactionsView = ({
     return {
       icon: Icons.CreditCard,
       label: tarjeta?.nombre || 'Tarjeta',
-      color: 'text-blue-600'
+      color: 'text-accent'
     };
   };
 
@@ -165,8 +165,8 @@ const TransactionsView = ({
           <p className="text-sm text-gray-500 dark:text-gray-400">Gastos</p>
         </Card>
         <Card className="glass-card text-center">
-          <Icons.CreditCard size={24} className="mx-auto mb-2 text-blue-500" />
-          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+          <Icons.CreditCard size={24} className="mx-auto mb-2 text-accent" />
+          <p className="text-2xl font-bold text-accent dark:text-accent-light">
             {transacciones.filter(t => t.tipo === 'PagoTarjeta').length}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">Pagos</p>
@@ -218,7 +218,7 @@ const TransactionsView = ({
                             {transaccion.descripcion}
                           </p>
                           {transaccion.esRecurrente && (
-                            <Icons.RefreshCcw size={14} className="text-blue-500 flex-shrink-0" />
+                            <Icons.RefreshCcw size={14} className="text-accent flex-shrink-0" />
                           )}
                           {transaccion.esCuotas && (
                             <Badge variant="info" size="sm">
@@ -249,7 +249,7 @@ const TransactionsView = ({
                           transaccion.tipo === 'Ingreso'
                             ? 'text-green-600 dark:text-green-400'
                             : transaccion.tipo === 'PagoTarjeta'
-                            ? 'text-blue-600 dark:text-blue-400'
+                            ? 'text-accent dark:text-accent-light'
                             : 'text-red-600 dark:text-red-400'
                         }`}>
                           {transaccion.tipo === 'Ingreso' ? '+' : '-'}{formatCurrency(transaccion.monto)}
@@ -270,10 +270,10 @@ const TransactionsView = ({
                         {transaccion.esCuotas && (
                           <button
                             onClick={() => onVerHistorialCuotas(transaccion)}
-                            className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-xl transition-colors"
+                            className="p-2 hover:bg-accent/10 dark:hover:bg-accent/20 rounded-xl transition-colors"
                             title="Ver historial de cuotas"
                           >
-                            <Icons.History size={18} className="text-blue-600" />
+                            <Icons.History size={18} className="text-accent" />
                           </button>
                         )}
                         <button

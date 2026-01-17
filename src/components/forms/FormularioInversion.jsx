@@ -116,9 +116,9 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+      <div className="bg-accent/10 border border-accent/20 rounded-xl p-4">
         <div className="flex items-center gap-3 mb-2">
-          <Icons.TrendingUp size={24} className="text-blue-600" />
+          <Icons.TrendingUp size={24} className="text-accent" />
           <div>
             <h3 className="font-bold text-gray-800">{stockSymbol}</h3>
             <p className="text-sm text-gray-600">{stockName}</p>
@@ -142,7 +142,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
             onClick={() => handleModeChange('amount')}
             className={`px-4 py-3 rounded-xl border-2 transition-all ${
               inputMode === 'amount'
-                ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold'
+                ? 'border-accent bg-accent/10 text-accent font-bold'
                 : 'border-gray-300 hover:border-gray-400'
             }`}
           >
@@ -153,7 +153,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
             onClick={() => handleModeChange('shares')}
             className={`px-4 py-3 rounded-xl border-2 transition-all ${
               inputMode === 'shares'
-                ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold'
+                ? 'border-accent bg-accent/10 text-accent font-bold'
                 : 'border-gray-300 hover:border-gray-400'
             }`}
           >
@@ -178,7 +178,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
               step="0.01"
               min="0.01"
               placeholder="Ej: 100.00"
-              className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-accent"
             />
           </div>
           <p className="text-xs text-gray-500 mt-1">
@@ -198,7 +198,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
             step="0.000001"
             min="0.000001"
             placeholder="Ej: 10 o 0.166667"
-            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 ${
+            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-accent ${
               errors.shares ? 'border-red-500' : 'border-gray-300'
             }`}
           />
@@ -226,7 +226,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
             step="0.01"
             min="0.01"
             placeholder="Ej: 450.50"
-            className={`w-full pl-8 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 ${
+            className={`w-full pl-8 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-accent ${
               errors.purchasePrice ? 'border-red-500' : 'border-gray-300'
             }`}
           />
@@ -259,7 +259,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
           value={formData.purchaseDate}
           onChange={handleChange}
           max={new Date().toISOString().split('T')[0]}
-          className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 ${
+          className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-accent ${
             errors.purchaseDate ? 'border-red-500' : 'border-gray-300'
           }`}
         />
@@ -279,13 +279,13 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
           onChange={handleChange}
           placeholder="Ej: Compra inicial de ETF diversificado"
           rows="3"
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-accent"
         />
       </div>
 
       {/* Resumen de inversión */}
       {totalInvestedUSD > 0 && (
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+        <div className="bg-gradient-to-br from-accent to-accent-light rounded-xl p-4 text-white">
           <p className="text-sm opacity-90 mb-1">Total a Invertir</p>
           <p className="text-3xl font-bold">${totalInvestedUSD.toFixed(2)} USD</p>
           <p className="text-xs opacity-80 mt-2">
@@ -305,7 +305,7 @@ const FormularioInversion = ({ investment, stockSymbol, stockName, currentPrice,
         </button>
         <button
           type="submit"
-          className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-medium"
+          className="flex-1 px-6 py-3 bg-accent text-white rounded-xl hover:bg-accent/90 font-medium"
         >
           {investment ? 'Actualizar' : 'Registrar Inversión'}
         </button>

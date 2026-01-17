@@ -260,7 +260,7 @@ const SeccionCuotas = ({ transacciones, tarjetas, efectivoDisponible, onPagarCuo
                       <p className="font-bold text-purple-700 text-lg">S/ {t.monto.toFixed(2)}</p>
                       <button
                         onClick={() => onPagarCuotas(transacciones.find(tr => tr.id === t.id))}
-                        className="text-xs text-blue-600 hover:text-blue-800 hover:underline font-medium mt-1"
+                        className="text-xs text-accent hover:text-accent/80 hover:underline font-medium mt-1"
                       >
                         Pagar ahora →
                       </button>
