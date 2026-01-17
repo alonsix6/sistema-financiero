@@ -66,6 +66,7 @@ export const GradientCard = ({
     orange: 'card-gradient-orange',
     pink: 'card-gradient-pink',
     teal: 'card-gradient-teal',
+    accent: 'bg-gradient-to-br from-accent to-accent-light',
   };
 
   const paddingStyles = {

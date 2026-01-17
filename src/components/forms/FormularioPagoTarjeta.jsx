@@ -29,13 +29,13 @@ const FormularioPagoTarjeta = ({ tarjeta, efectivoDisponible, onPagar, onClose }
 
   return (
     <div className="space-y-6">
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+      <div className="bg-accent/10 border border-accent/20 rounded-xl p-4">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-blue-800">Efectivo Disponible</span>
-          <span className="text-lg font-bold text-blue-900">S/ {efectivoDisponible.toFixed(2)}</span>
+          <span className="text-sm font-medium text-accent">Efectivo Disponible</span>
+          <span className="text-lg font-bold text-accent">S/ {efectivoDisponible.toFixed(2)}</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-blue-800">Saldo Tarjeta</span>
+          <span className="text-sm font-medium text-accent">Saldo Tarjeta</span>
           <span className="text-lg font-bold text-red-600">S/ {tarjeta.saldoActual.toFixed(2)}</span>
         </div>
       </div>
@@ -77,7 +77,7 @@ const FormularioPagoTarjeta = ({ tarjeta, efectivoDisponible, onPagar, onClose }
           type="button"
           onClick={() => setTipoPago('personalizado')}
           className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
-            tipoPago === 'personalizado' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'
+            tipoPago === 'personalizado' ? 'border-accent bg-accent/10' : 'border-gray-200 hover:border-accent/50'
           }`}
         >
           <div>
@@ -105,7 +105,7 @@ const FormularioPagoTarjeta = ({ tarjeta, efectivoDisponible, onPagar, onClose }
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Monto a Pagar</span>
-          <span className="font-semibold text-blue-600">- S/ {montoAPagar.toFixed(2)}</span>
+          <span className="font-semibold text-accent">- S/ {montoAPagar.toFixed(2)}</span>
         </div>
         <div className="border-t pt-2 flex justify-between">
           <span className="font-bold text-gray-800">Nuevo Saldo</span>

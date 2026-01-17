@@ -80,22 +80,22 @@ const FormularioPagoAdelantado = ({ transaccion, efectivoDisponible, onPagar, on
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4">
+      <div className="bg-gradient-to-br from-purple-50 to-accent/10 border border-purple-200 rounded-xl p-4">
         <h4 className="font-bold text-purple-900 mb-2">{transaccion.descripcion}</h4>
         <p className="text-sm text-purple-700">{cuotasRestantes} cuotas restantes de {transaccion.cuotasInfo.numeroCuotas}</p>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
+      <div className="bg-accent/10 border border-accent/20 rounded-xl p-4 space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-blue-800">Efectivo Disponible:</span>
-          <span className="font-bold text-blue-900">S/ {efectivoDisponible.toFixed(2)}</span>
+          <span className="text-accent">Efectivo Disponible:</span>
+          <span className="font-bold text-accent">S/ {efectivoDisponible.toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-blue-800">Saldo restante en cuotas:</span>
+          <span className="text-accent">Saldo restante en cuotas:</span>
           <span className="font-bold text-red-600">S/ {saldoRestante.toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-blue-800">Monto por cuota:</span>
+          <span className="text-accent">Monto por cuota:</span>
           <span className="font-bold text-gray-800">S/ {montoCuota.toFixed(2)}</span>
         </div>
       </div>

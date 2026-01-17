@@ -115,7 +115,7 @@ const FormularioRecurrencia = ({ recurrencia, tarjetas, onSave, onClose, onDelet
           id="activo"
           checked={formData.activo}
           onChange={(e) => setFormData({ ...formData, activo: e.target.checked })}
-          className="w-5 h-5 text-blue-600"
+          className="w-5 h-5 text-accent"
         />
         <label htmlFor="activo" className="text-sm font-medium text-gray-700">
           Activo (se registrará automáticamente)
@@ -140,7 +140,7 @@ const FormularioRecurrencia = ({ recurrencia, tarjetas, onSave, onClose, onDelet
         <button type="button" onClick={onClose} className="flex-1 px-6 py-3 border rounded-xl">
           Cancelar
         </button>
-        <button type="submit" className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-xl">
+        <button type="submit" className="flex-1 px-6 py-3 bg-accent text-white rounded-xl">
           {recurrencia ? 'Actualizar' : 'Crear'}
         </button>
       </div>

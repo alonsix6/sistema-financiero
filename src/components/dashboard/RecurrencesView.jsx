@@ -35,16 +35,16 @@ const RecurrencesView = ({
       />
 
       {/* Info Card */}
-      <Card className="glass-card bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+      <Card className="glass-card bg-accent/10 dark:bg-accent/20 border border-accent/20 dark:border-accent/30">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Icons.Info size={20} className="text-blue-600" />
+          <div className="w-10 h-10 bg-accent/10 dark:bg-accent/30 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Icons.Info size={20} className="text-accent" />
           </div>
           <div>
-            <p className="font-semibold text-blue-900 dark:text-blue-100">
+            <p className="font-semibold text-accent dark:text-accent-light">
               Las recurrencias se procesan automaticamente
             </p>
-            <p className="text-sm text-blue-600 dark:text-blue-300">
+            <p className="text-sm text-accent dark:text-accent/70">
               Cuando llega el dia configurado, la transaccion se registra automaticamente.
               No necesitas agregarlas manualmente.
             </p>
@@ -234,7 +234,7 @@ const RecurrenceCard = ({ recurrencia, tarjetas, onEdit, type }) => {
               <span className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-1">
                 {tarjeta ? (
                   <>
-                    <Icons.CreditCard size={14} className="text-blue-500" />
+                    <Icons.CreditCard size={14} className="text-accent" />
                     {tarjeta.nombre}
                   </>
                 ) : (

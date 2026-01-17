@@ -48,8 +48,8 @@ const GoalsView = ({
           <p className="text-sm text-gray-500 dark:text-gray-400">Total Ahorrado</p>
         </Card>
         <Card className="glass-card text-center">
-          <div className="w-12 h-12 mx-auto mb-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
-            <Icons.Target size={24} className="text-blue-500" />
+          <div className="w-12 h-12 mx-auto mb-3 bg-accent/10 dark:bg-accent/20 rounded-xl flex items-center justify-center">
+            <Icons.Target size={24} className="text-accent" />
           </div>
           <p className="text-2xl font-bold text-gray-900 dark:text-white">
             {formatCurrency(totalObjetivo)}

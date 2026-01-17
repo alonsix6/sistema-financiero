@@ -97,7 +97,7 @@ const HomeView = ({
             label="Balance"
             value={formatCurrency(resumen.balance)}
             icon={Icons.Wallet}
-            gradient={resumen.balance >= 0 ? 'blue' : 'orange'}
+            gradient={resumen.balance >= 0 ? 'accent' : 'orange'}
           />
           <StatCard
             label="Tasa de Ahorro"
@@ -144,7 +144,7 @@ const HomeView = ({
       {/* Total Cashflow */}
       <Section title="Cashflow Total" subtitle="Todo el historico" icon={Icons.Activity}>
         <Grid cols={3}>
-          <GradientCard gradient="blue">
+          <GradientCard gradient="green">
             <p className="text-sm opacity-80 mb-1">Total Ingresos</p>
             <p className="text-2xl md:text-3xl font-bold">
               {formatCurrency(cashflowTotal.ingresosTotal)}

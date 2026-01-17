@@ -185,9 +185,9 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete, transacciones =
       </div>
 
       {/* Información adicional */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2">
-        <Icons.Info size={14} className="text-blue-600 mt-0.5 flex-shrink-0" />
-        <p className="text-xs text-blue-800">
+      <div className="bg-accent/10 border border-accent/20 rounded-xl p-3 flex items-start gap-2">
+        <Icons.Info size={14} className="text-accent mt-0.5 flex-shrink-0" />
+        <p className="text-xs text-accent">
           <strong>Nota:</strong> Si configuras un día mayor a 28, el sistema ajustará automáticamente la fecha en meses que no tengan ese día (ej: 31 en febrero se ajustará al último día del mes).
         </p>
       </div>
@@ -208,7 +208,7 @@ const FormularioTarjeta = ({ tarjeta, onSave, onClose, onDelete, transacciones =
         <button type="button" onClick={onClose} className="flex-1 px-6 py-3 border rounded-xl">
           Cancelar
         </button>
-        <button type="submit" className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-xl">
+        <button type="submit" className="flex-1 px-6 py-3 bg-accent text-white rounded-xl">
           Guardar
         </button>
       </div>

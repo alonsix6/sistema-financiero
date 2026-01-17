@@ -27,7 +27,7 @@ const TOP_10_STOCKS = [
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center py-8">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
   </div>
 );
 
@@ -538,25 +538,25 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
                         key={idx}
                         className={`p-3 rounded-lg border-2 ${
                           rec.type === 'success' ? 'bg-green-50 border-green-200' :
-                          rec.type === 'good' ? 'bg-blue-50 border-blue-200' :
+                          rec.type === 'good' ? 'bg-accent/10 border-accent/20' :
                           rec.type === 'neutral' ? 'bg-gray-50 border-gray-200' :
                           rec.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
                           rec.type === 'danger' ? 'bg-red-50 border-red-200' :
                           rec.type === 'buy' ? 'bg-green-50 border-green-300' :
                           rec.type === 'sell' ? 'bg-red-50 border-red-300' :
-                          'bg-blue-50 border-blue-200'
+                          'bg-accent/10 border-accent/20'
                         }`}
                       >
                         <div className="flex items-start gap-2">
                           <RecIcon size={20} className={
                             rec.type === 'success' ? 'text-green-600' :
-                            rec.type === 'good' ? 'text-blue-600' :
+                            rec.type === 'good' ? 'text-accent' :
                             rec.type === 'neutral' ? 'text-gray-600' :
                             rec.type === 'warning' ? 'text-yellow-600' :
                             rec.type === 'danger' ? 'text-red-600' :
                             rec.type === 'buy' ? 'text-green-600' :
                             rec.type === 'sell' ? 'text-red-600' :
-                            'text-blue-600'
+                            'text-accent'
                           } />
                           <div className="flex-1">
                             <p className="text-sm font-bold text-gray-800">{rec.title}</p>
@@ -633,7 +633,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
               {/* Botón para agregar inversión */}
               <button
                 onClick={() => openInvestmentModal(symbol, profile?.name || name || symbol, type, currentPrice)}
-                className="w-full py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-medium mb-3 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-accent text-white rounded-xl hover:bg-accent/90 font-medium mb-3 flex items-center justify-center gap-2"
               >
                 {metrics ? <><Plus size={18} /> Agregar más inversión</> : <><DollarSign size={18} /> Registrar Inversión</>}
               </button>
@@ -663,7 +663,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
               <p className={textSecondaryClass}>Sin datos disponibles</p>
               <button
                 onClick={() => fetchStockData(symbol, type)}
-                className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                className="mt-2 text-accent hover:text-accent/80 text-sm font-medium"
               >
                 Cargar datos
               </button>
@@ -712,7 +712,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
             </span>
             <button
               onClick={() => setLiveUpdates(!liveUpdates)}
-              className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+              className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${
                 liveUpdates ? 'bg-green-500' : 'bg-gray-300'
               }`}
               title={liveUpdates ? 'Desactivar actualizaciones' : 'Activar actualizaciones'}
@@ -738,7 +738,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
       {/* Resumen del Portafolio */}
       {portfolioSummary.totalInvested > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
+          <div className="bg-gradient-to-br from-accent to-accent-light rounded-2xl shadow-lg p-6 text-white">
             <p className="text-sm opacity-80 mb-1 flex items-center gap-1"><Briefcase size={14} /> Total Invertido</p>
             <p className="text-3xl font-bold">${portfolioSummary.totalInvested.toFixed(2)}</p>
           </div>
@@ -783,7 +783,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
           <button
             onClick={addToFavorites}
             disabled={!searchSymbol}
-            className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
+            className="px-6 py-3 bg-accent text-white rounded-xl hover:bg-accent/90 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
           >
             Agregar
           </button>
@@ -818,7 +818,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
         <div className="flex justify-center">
           <button
             onClick={updateAllStocks}
-            className="px-8 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-medium flex items-center gap-2"
+            className="px-8 py-3 bg-accent text-white rounded-xl hover:bg-accent/90 font-medium flex items-center gap-2"
           >
             <RefreshCw size={18} /> Actualizar Manualmente
           </button>
@@ -892,7 +892,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
                   onClick={() => handlePeriodChange(period)}
                   className={`px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                     chartPeriod === period
-                      ? 'bg-blue-500 text-white'
+                      ? 'bg-accent text-white'
                       : darkMode
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -961,7 +961,7 @@ const StockInvestments = ({ darkMode, favorites = [], investments = [], onUpdate
                   stockData[detailStock.symbol]?.quote?.c
                 );
               }}
-              className="w-full py-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-semibold text-lg flex items-center justify-center gap-2"
+              className="w-full py-4 bg-accent text-white rounded-xl hover:bg-accent/90 font-semibold text-lg flex items-center justify-center gap-2"
             >
               <DollarSign size={20} /> Registrar Inversión
             </button>

@@ -35,7 +35,7 @@ const FormularioAporteMeta = ({ meta, disponibleParaAhorrar, onAportar, onClose 
   return (
     <div className="space-y-6">
       {/* Información de la Meta */}
-      <div className="bg-blue-50 rounded-xl p-6">
+      <div className="bg-accent/10 rounded-xl p-6">
         <h3 className="text-lg font-bold text-gray-800 mb-4">{meta.nombre}</h3>
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
@@ -57,7 +57,7 @@ const FormularioAporteMeta = ({ meta, disponibleParaAhorrar, onAportar, onClose 
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div
-                className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all"
+                className="bg-gradient-to-r from-accent to-accent-light h-3 rounded-full transition-all"
                 style={{ width: `${Math.min(progreso.porcentaje, 100)}%` }}
               ></div>
             </div>
@@ -134,21 +134,21 @@ const FormularioAporteMeta = ({ meta, disponibleParaAhorrar, onAportar, onClose 
                   <button
                     type="button"
                     onClick={() => setMonto((disponibleParaAhorrar * 0.25).toFixed(2))}
-                    className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 text-sm font-semibold"
+                    className="px-4 py-2 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 text-sm font-semibold"
                   >
                     25%
                   </button>
                   <button
                     type="button"
                     onClick={() => setMonto((disponibleParaAhorrar * 0.5).toFixed(2))}
-                    className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 text-sm font-semibold"
+                    className="px-4 py-2 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 text-sm font-semibold"
                   >
                     50%
                   </button>
                   <button
                     type="button"
                     onClick={() => setMonto(disponibleParaAhorrar.toFixed(2))}
-                    className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 text-sm font-semibold"
+                    className="px-4 py-2 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 text-sm font-semibold"
                   >
                     Todo
                   </button>
@@ -188,13 +188,13 @@ const FormularioAporteMeta = ({ meta, disponibleParaAhorrar, onAportar, onClose 
               </div>
               <div className="flex justify-between pt-2 border-t">
                 <span className="text-gray-800 font-semibold">Nuevo saldo:</span>
-                <span className="font-bold text-blue-600">
+                <span className="font-bold text-accent">
                   S/ {(meta.montoAhorrado + (tipoOperacion === 'aportar' ? parseFloat(monto) : -parseFloat(monto))).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Progreso:</span>
-                <span className="font-semibold text-blue-600">
+                <span className="font-semibold text-accent">
                   {(((meta.montoAhorrado + (tipoOperacion === 'aportar' ? parseFloat(monto) : -parseFloat(monto))) / meta.montoObjetivo) * 100).toFixed(1)}%
                 </span>
               </div>
