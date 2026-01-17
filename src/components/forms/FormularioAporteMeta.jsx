@@ -3,6 +3,7 @@
  */
 
 import React, { useState } from 'react';
+import * as Icons from 'lucide-react';
 import Calculations from '../../utils/calculations.js';
 
 const FormularioAporteMeta = ({ meta, disponibleParaAhorrar, onAportar, onClose }) => {
@@ -68,7 +69,7 @@ const FormularioAporteMeta = ({ meta, disponibleParaAhorrar, onAportar, onClose 
       <div className="bg-green-50 border border-green-200 rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-600 mb-1">💰 Disponible para ahorrar</p>
+            <p className="text-sm text-gray-600 mb-1">Disponible para ahorrar</p>
             <p className="text-xs text-gray-500">
               (Efectivo - Deudas de tarjetas - Dinero en otras metas)
             </p>
@@ -90,7 +91,7 @@ const FormularioAporteMeta = ({ meta, disponibleParaAhorrar, onAportar, onClose 
               : 'border-gray-200 text-gray-600 hover:border-gray-300'
           }`}
         >
-          ➕ Aportar
+          Aportar
         </button>
         <button
           type="button"
@@ -101,7 +102,7 @@ const FormularioAporteMeta = ({ meta, disponibleParaAhorrar, onAportar, onClose 
               : 'border-gray-200 text-gray-600 hover:border-gray-300'
           }`}
         >
-          ➖ Retirar
+          Retirar
         </button>
       </div>
 
@@ -159,7 +160,7 @@ const FormularioAporteMeta = ({ meta, disponibleParaAhorrar, onAportar, onClose 
                   onClick={() => setMonto(montoPendiente.toFixed(2))}
                   className="col-span-3 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 text-sm font-semibold"
                 >
-                  ✅ Completar Meta (S/ {montoPendiente.toFixed(2)})
+                  Completar Meta (S/ {montoPendiente.toFixed(2)})
                 </button>
               )}
             </div>
@@ -218,7 +219,7 @@ const FormularioAporteMeta = ({ meta, disponibleParaAhorrar, onAportar, onClose 
                 : 'bg-orange-500 hover:bg-orange-600'
             }`}
           >
-            {tipoOperacion === 'aportar' ? '➕ Aportar' : '➖ Retirar'}
+            {tipoOperacion === 'aportar' ? 'Aportar' : 'Retirar'}
           </button>
         </div>
       </form>

@@ -3,6 +3,7 @@
  */
 
 import React, { useState } from 'react';
+import * as Icons from 'lucide-react';
 import { CATEGORIAS_METAS } from '../../utils/constants.js';
 
 const FormularioMeta = ({ meta, onSave, onDelete, onClose }) => {
@@ -47,21 +48,24 @@ const FormularioMeta = ({ meta, onSave, onDelete, onClose }) => {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Categoría *</label>
         <div className="grid grid-cols-4 gap-3">
-          {CATEGORIAS_METAS.map((cat) => (
-            <button
-              key={cat.valor}
-              type="button"
-              onClick={() => setFormData({ ...formData, categoria: cat.valor })}
-              className={`p-4 rounded-xl border-2 transition-all ${
-                formData.categoria === cat.valor
-                  ? 'border-blue-500 bg-blue-50 shadow-md'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <span className="text-3xl block mb-1">{cat.icono}</span>
-              <span className="text-xs font-medium">{cat.valor}</span>
-            </button>
-          ))}
+          {CATEGORIAS_METAS.map((cat) => {
+            const IconComponent = Icons[cat.iconName] || Icons.Target;
+            return (
+              <button
+                key={cat.valor}
+                type="button"
+                onClick={() => setFormData({ ...formData, categoria: cat.valor })}
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  formData.categoria === cat.valor
+                    ? 'border-blue-500 bg-blue-50 shadow-md'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <IconComponent size={28} className="mx-auto mb-1 text-gray-600" />
+                <span className="text-xs font-medium">{cat.valor}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -138,15 +142,17 @@ const FormularioMeta = ({ meta, onSave, onDelete, onClose }) => {
       )}
 
       {/* Vista Previa */}
-      {formData.montoObjetivo && (
-        <div className={`bg-gradient-to-br ${categoriaSeleccionada.color} rounded-xl p-6 text-white`}>
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-4xl">{categoriaSeleccionada.icono}</span>
-            <div>
-              <p className="text-sm opacity-80">Vista Previa</p>
-              <p className="text-xl font-bold">{formData.nombre || 'Tu Meta'}</p>
+      {formData.montoObjetivo && categoriaSeleccionada && (() => {
+        const PreviewIcon = Icons[categoriaSeleccionada.iconName] || Icons.Target;
+        return (
+          <div className={`bg-gradient-to-br ${categoriaSeleccionada.color} rounded-xl p-6 text-white`}>
+            <div className="flex items-center gap-3 mb-4">
+              <PreviewIcon size={40} className="text-white/90" />
+              <div>
+                <p className="text-sm opacity-80">Vista Previa</p>
+                <p className="text-xl font-bold">{formData.nombre || 'Tu Meta'}</p>
+              </div>
             </div>
-          </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="opacity-80">Objetivo:</span>
@@ -166,7 +172,8 @@ const FormularioMeta = ({ meta, onSave, onDelete, onClose }) => {
             )}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Botones */}
       <div className="flex gap-3">

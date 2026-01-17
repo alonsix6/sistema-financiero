@@ -3,6 +3,7 @@
  */
 
 import React, { useState } from 'react';
+import * as Icons from 'lucide-react';
 
 const FormularioPagoTarjeta = ({ tarjeta, efectivoDisponible, onPagar, onClose }) => {
   const pagoMinimo = Math.max(tarjeta.saldoActual * 0.05, 25);
@@ -49,7 +50,7 @@ const FormularioPagoTarjeta = ({ tarjeta, efectivoDisponible, onPagar, onClose }
         >
           <div className="flex justify-between items-center">
             <div>
-              <p className="font-bold text-gray-800">✅ Pago Total (Recomendado)</p>
+              <p className="font-bold text-gray-800">Pago Total (Recomendado)</p>
               <p className="text-sm text-gray-600">Libera todo el crédito</p>
             </div>
             <span className="text-xl font-bold text-green-600">S/ {tarjeta.saldoActual.toFixed(2)}</span>
@@ -65,7 +66,7 @@ const FormularioPagoTarjeta = ({ tarjeta, efectivoDisponible, onPagar, onClose }
         >
           <div className="flex justify-between items-center">
             <div>
-              <p className="font-bold text-gray-800">⚠️ Pago Mínimo</p>
+              <p className="font-bold text-gray-800">Pago Minimo</p>
               <p className="text-sm text-gray-600">Evita mora, pero acumula intereses</p>
             </div>
             <span className="text-xl font-bold text-yellow-600">S/ {pagoMinimo.toFixed(2)}</span>
@@ -80,7 +81,7 @@ const FormularioPagoTarjeta = ({ tarjeta, efectivoDisponible, onPagar, onClose }
           }`}
         >
           <div>
-            <p className="font-bold text-gray-800 mb-2">💳 Pago Personalizado</p>
+            <p className="font-bold text-gray-800 mb-2">Pago Personalizado</p>
             {tipoPago === 'personalizado' && (
               <input
                 type="number"
@@ -121,7 +122,7 @@ const FormularioPagoTarjeta = ({ tarjeta, efectivoDisponible, onPagar, onClose }
       {montoAPagar > efectivoDisponible && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <p className="text-sm text-red-800">
-            ⚠️ No tienes suficiente efectivo para este pago. Necesitas S/ {(montoAPagar - efectivoDisponible).toFixed(2)} adicionales.
+            No tienes suficiente efectivo para este pago. Necesitas S/ {(montoAPagar - efectivoDisponible).toFixed(2)} adicionales.
           </p>
         </div>
       )}
@@ -136,7 +137,7 @@ const FormularioPagoTarjeta = ({ tarjeta, efectivoDisponible, onPagar, onClose }
           disabled={montoAPagar > efectivoDisponible || montoAPagar <= 0}
           className="flex-1 px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
-          💳 Confirmar Pago
+          <Icons.CreditCard size={18} className="inline mr-2" />Confirmar Pago
         </button>
       </div>
     </div>
