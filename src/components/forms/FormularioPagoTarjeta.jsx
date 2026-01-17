@@ -105,12 +105,48 @@ const FormularioPagoTarjeta = ({ tarjeta, transacciones, efectivoDisponible, onP
           </div>
         )}
 
+        {/* Crédito bloqueado por cuotas futuras */}
+        {estadoCuenta.creditoBloqueado > 0 && (
+          <div className="bg-purple-500/20 border border-purple-500/30 rounded-xl p-3 mb-3">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Icons.Lock size={16} className="text-purple-400" />
+                <span className="text-sm text-purple-300">Crédito bloqueado</span>
+              </div>
+              <span className="font-bold text-purple-400">S/ {estadoCuenta.creditoBloqueado.toFixed(2)}</span>
+            </div>
+            <p className="text-xs text-purple-300/60 mt-1">
+              Reservado para {estadoCuenta.comprasEnCuotas} compra(s) en cuotas. Se libera al pagar cada cuota.
+            </p>
+          </div>
+        )}
+
+        {/* Resumen de crédito */}
+        <div className="bg-white/5 rounded-xl p-3 mb-3">
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-white/60">Crédito usado</span>
+            <span className="text-white/80">S/ {estadoCuenta.creditoUsado.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center text-sm mt-1">
+            <span className="text-white/60">Crédito disponible</span>
+            <span className="text-green-400 font-medium">S/ {estadoCuenta.creditoDisponible.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center text-xs mt-1">
+            <span className="text-white/40">Límite total</span>
+            <span className="text-white/50">S/ {tarjeta.limite.toFixed(2)}</span>
+          </div>
+        </div>
+
         {/* Sin deuda */}
         {!hayAlgoPorPagar && (
           <div className="bg-green-500/20 border border-green-500/30 rounded-xl p-4 text-center">
             <Icons.CheckCircle size={32} className="text-green-400 mx-auto mb-2" />
-            <p className="text-green-300 font-medium">Sin deuda pendiente</p>
-            <p className="text-xs text-green-300/60 mt-1">Tu tarjeta está al día</p>
+            <p className="text-green-300 font-medium">Sin pago pendiente este mes</p>
+            <p className="text-xs text-green-300/60 mt-1">
+              {estadoCuenta.creditoBloqueado > 0
+                ? `Tienes S/ ${estadoCuenta.creditoBloqueado.toFixed(2)} en cuotas futuras`
+                : 'Tu tarjeta está completamente al día'}
+            </p>
           </div>
         )}
 

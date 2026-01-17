@@ -834,6 +834,7 @@ const Calculations = {
   /**
    * Calcula el estado de cuenta completo de una tarjeta
    * Separa: saldo rotativo (compras sin cuotas) + cuotas del mes
+   * Incluye crédito bloqueado por compras en cuotas activas
    * @param {Array} transacciones - Lista de transacciones
    * @param {Object} tarjeta - Objeto tarjeta
    * @returns {Object} Estado de cuenta desglosado
@@ -844,6 +845,29 @@ const Calculations = {
 
     // Obtener cuotas del mes
     const cuotasInfo = Calculations.calcularCuotasDelMes(transacciones, tarjeta.id, tarjeta);
+
+    // Calcular crédito bloqueado por cuotas pendientes
+    // El crédito se bloquea por el monto TOTAL de cuotas restantes, no solo las del mes
+    const comprasConCuotas = transacciones.filter(t =>
+      t.esCuotas &&
+      parseInt(t.metodoPago) === parseInt(tarjeta.id) &&
+      t.cuotasInfo.cuotasRestantes > 0
+    );
+
+    // Crédito bloqueado = suma de (cuotas restantes * monto por cuota) para cada compra
+    const creditoBloqueado = comprasConCuotas.reduce((sum, compra) => {
+      // Calcular el monto pendiente real considerando pagos parciales
+      const cuotasPendientes = compra.cuotasInfo.fechasCobro.filter(c =>
+        c.estado !== 'pagada'
+      );
+      const montoBloqueado = cuotasPendientes.reduce((s, c) =>
+        s + (c.montoPendiente || c.monto), 0
+      );
+      return sum + montoBloqueado;
+    }, 0);
+
+    // Crédito disponible = límite - rotativo - crédito bloqueado por cuotas
+    const creditoDisponible = Math.max(0, tarjeta.limite - saldoRotativo - creditoBloqueado);
 
     // Pago total del mes = rotativo + cuotas del mes + cuotas vencidas
     const pagoTotalMes = saldoRotativo + cuotasInfo.totalCuotasPendientes;
@@ -863,11 +887,15 @@ const Calculations = {
       cuotasVencidas: cuotasInfo.cuotasVencidas,
       totalCuotasVencidas: cuotasInfo.totalCuotasVencidas,
       totalCuotasPendientes: cuotasInfo.totalCuotasPendientes,
+      creditoBloqueado: Math.round(creditoBloqueado * 100) / 100,
+      creditoDisponible: Math.round(creditoDisponible * 100) / 100,
+      creditoUsado: Math.round((saldoRotativo + creditoBloqueado) * 100) / 100,
       pagoTotalMes: Math.round(pagoTotalMes * 100) / 100,
       pagoMinimo: Math.round(Math.min(pagoMinimo, pagoTotalMes) * 100) / 100,
       fechaCierre: cuotasInfo.fechaCierre,
       fechaPago: cuotasInfo.fechaPago,
-      tieneCuotas: cuotasInfo.cuotasDelMes.length > 0 || cuotasInfo.cuotasVencidas.length > 0
+      tieneCuotas: cuotasInfo.cuotasDelMes.length > 0 || cuotasInfo.cuotasVencidas.length > 0,
+      comprasEnCuotas: comprasConCuotas.length
     };
   },
 

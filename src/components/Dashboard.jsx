@@ -926,9 +926,8 @@ const Dashboard = ({ userData, onUpdateData }) => {
                 {userData.tarjetas.map(tarjeta => {
                   // Usar el nuevo estado de cuenta calculado
                   const estadoCuenta = Calculations.calcularEstadoCuentaTarjeta(userData.transacciones, tarjeta);
-                  const saldoTotal = estadoCuenta.pagoTotalMes;
-                  const utilizacion = ((saldoTotal / tarjeta.limite) * 100).toFixed(1);
-                  const disponible = tarjeta.limite - saldoTotal;
+                  // Utilización = crédito usado (rotativo + bloqueado por cuotas) / límite
+                  const utilizacion = ((estadoCuenta.creditoUsado / tarjeta.limite) * 100).toFixed(1);
                   const bancoConfig = BANCOS.find(b => b.nombre === tarjeta.banco) || BANCOS[0];
 
                   return (
@@ -942,29 +941,24 @@ const Dashboard = ({ userData, onUpdateData }) => {
                       </div>
                       <p className="text-lg font-mono mb-6">•••• •••• •••• {tarjeta.ultimos4 || '••••'}</p>
                       <div className="space-y-3 mb-4">
+                        {/* Crédito usado y disponible */}
                         <div>
                           <div className="flex justify-between text-sm mb-2">
-                            <span>Pago del mes: S/ {saldoTotal.toFixed(2)}</span>
-                            <span>Disponible: S/ {Math.max(0, disponible).toFixed(2)}</span>
+                            <span>Usado: S/ {estadoCuenta.creditoUsado.toFixed(2)}</span>
+                            <span className="text-green-200">Disponible: S/ {estadoCuenta.creditoDisponible.toFixed(2)}</span>
                           </div>
-                          {/* Desglose del pago */}
+                          {/* Desglose del crédito usado */}
                           <div className="text-xs space-y-1 mb-2 opacity-90">
-                            {estadoCuenta.totalCuotasVencidas > 0 && (
-                              <div className="flex justify-between text-red-200">
-                                <span>• Cuotas vencidas</span>
-                                <span>S/ {estadoCuenta.totalCuotasVencidas.toFixed(2)}</span>
-                              </div>
-                            )}
-                            {estadoCuenta.totalCuotasDelMes > 0 && (
-                              <div className="flex justify-between text-amber-200">
-                                <span>• Cuotas del mes</span>
-                                <span>S/ {estadoCuenta.totalCuotasDelMes.toFixed(2)}</span>
-                              </div>
-                            )}
                             {estadoCuenta.saldoRotativo > 0 && (
                               <div className="flex justify-between text-blue-200">
                                 <span>• Compras sin cuotas</span>
                                 <span>S/ {estadoCuenta.saldoRotativo.toFixed(2)}</span>
+                              </div>
+                            )}
+                            {estadoCuenta.creditoBloqueado > 0 && (
+                              <div className="flex justify-between text-purple-200">
+                                <span>• Bloqueado en cuotas ({estadoCuenta.comprasEnCuotas})</span>
+                                <span>S/ {estadoCuenta.creditoBloqueado.toFixed(2)}</span>
                               </div>
                             )}
                           </div>
@@ -973,6 +967,36 @@ const Dashboard = ({ userData, onUpdateData }) => {
                           </div>
                           <div className="text-xs mt-1 opacity-80">Límite: S/ {tarjeta.limite.toFixed(2)}</div>
                         </div>
+
+                        {/* Pago del mes (si hay algo por pagar) */}
+                        {estadoCuenta.pagoTotalMes > 0 && (
+                          <div className="pt-2 border-t border-white/20">
+                            <div className="flex justify-between text-sm mb-1">
+                              <span className="font-medium">Pago del mes</span>
+                              <span className="font-bold">S/ {estadoCuenta.pagoTotalMes.toFixed(2)}</span>
+                            </div>
+                            <div className="text-xs space-y-0.5 opacity-80">
+                              {estadoCuenta.totalCuotasVencidas > 0 && (
+                                <div className="flex justify-between text-red-200">
+                                  <span>Cuotas vencidas</span>
+                                  <span>S/ {estadoCuenta.totalCuotasVencidas.toFixed(2)}</span>
+                                </div>
+                              )}
+                              {estadoCuenta.totalCuotasDelMes > 0 && (
+                                <div className="flex justify-between text-amber-200">
+                                  <span>Cuotas del mes</span>
+                                  <span>S/ {estadoCuenta.totalCuotasDelMes.toFixed(2)}</span>
+                                </div>
+                              )}
+                              {estadoCuenta.saldoRotativo > 0 && (
+                                <div className="flex justify-between">
+                                  <span>Sin cuotas</span>
+                                  <span>S/ {estadoCuenta.saldoRotativo.toFixed(2)}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
                         <div className="flex justify-between text-sm pt-2 border-t border-white/20">
                           <span>Cierre: día {tarjeta.fechaCierre}</span>
@@ -985,7 +1009,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                             setTarjetaPagar(tarjeta);
                             setModalPagoTarjeta(true);
                           }}
-                          disabled={saldoTotal === 0}
+                          disabled={estadoCuenta.pagoTotalMes === 0}
                           className="bg-green-500/80 hover:bg-green-500 py-2.5 rounded-lg text-sm font-semibold disabled:bg-white/10 disabled:cursor-not-allowed"
                         >
                           Pagar
