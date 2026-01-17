@@ -734,6 +734,289 @@ const Calculations = {
   },
 
   /**
+   * Calcula las cuotas que vencen en el ciclo actual de facturación
+   * Incluye cuotas vencidas (no pagadas de meses anteriores) y cuotas del mes actual
+   * @param {Array} transacciones - Lista de transacciones
+   * @param {number} tarjetaId - ID de la tarjeta
+   * @param {Object} tarjeta - Objeto tarjeta con fechaCierre y fechaPago
+   * @returns {Object} Información de cuotas del mes
+   */
+  calcularCuotasDelMes: (transacciones, tarjetaId, tarjeta) => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    // Calcular el rango del ciclo de facturación actual
+    // El ciclo va desde fechaCierre del mes anterior hasta fechaCierre del mes actual
+    let yearCierre = hoy.getFullYear();
+    let mesCierre = hoy.getMonth();
+
+    // Si hoy es después del día de cierre, el ciclo es del cierre de este mes al siguiente
+    if (hoy.getDate() > tarjeta.fechaCierre) {
+      mesCierre++;
+      if (mesCierre > 11) {
+        mesCierre = 0;
+        yearCierre++;
+      }
+    }
+
+    const fechaCierreActual = Calculations.ajustarDiaAlMes(yearCierre, mesCierre, tarjeta.fechaCierre);
+
+    // Fecha de pago es aproximadamente un mes después del cierre
+    let yearPago = fechaCierreActual.getFullYear();
+    let mesPago = fechaCierreActual.getMonth() + 1;
+    if (mesPago > 11) {
+      mesPago = 0;
+      yearPago++;
+    }
+    const fechaPagoActual = Calculations.ajustarDiaAlMes(yearPago, mesPago, tarjeta.fechaPago);
+
+    // Buscar cuotas pendientes y vencidas para esta tarjeta
+    const comprasConCuotas = transacciones.filter(t =>
+      t.esCuotas &&
+      parseInt(t.metodoPago) === parseInt(tarjetaId) &&
+      t.cuotasInfo.cuotasRestantes > 0
+    );
+
+    let cuotasDelMes = [];
+    let totalCuotasDelMes = 0;
+    let cuotasVencidas = [];
+    let totalCuotasVencidas = 0;
+
+    comprasConCuotas.forEach(compra => {
+      compra.cuotasInfo.fechasCobro.forEach((cuota, idx) => {
+        if (cuota.estado === 'pagada') return;
+
+        const fechaCuota = new Date(cuota.fecha + 'T12:00:00');
+        fechaCuota.setHours(0, 0, 0, 0);
+
+        // Cuota vencida (fecha pasada y no pagada)
+        if (cuota.estado === 'vencida' || cuota.estado === 'parcial_vencida' || fechaCuota < hoy) {
+          const montoPendiente = cuota.montoPendiente || cuota.monto;
+          cuotasVencidas.push({
+            transaccionId: compra.id,
+            descripcion: compra.descripcion,
+            numeroCuota: cuota.cuota,
+            totalCuotas: compra.cuotasInfo.numeroCuotas,
+            monto: montoPendiente,
+            fecha: cuota.fecha,
+            tieneIntereses: compra.cuotasInfo.tieneIntereses
+          });
+          totalCuotasVencidas += montoPendiente;
+        }
+        // Cuota del mes actual (vence antes o en la fecha de pago actual)
+        else if (fechaCuota <= fechaPagoActual) {
+          const montoPendiente = cuota.montoPendiente || cuota.monto;
+          cuotasDelMes.push({
+            transaccionId: compra.id,
+            descripcion: compra.descripcion,
+            numeroCuota: cuota.cuota,
+            totalCuotas: compra.cuotasInfo.numeroCuotas,
+            monto: montoPendiente,
+            fecha: cuota.fecha,
+            tieneIntereses: compra.cuotasInfo.tieneIntereses
+          });
+          totalCuotasDelMes += montoPendiente;
+        }
+      });
+    });
+
+    return {
+      cuotasDelMes,
+      totalCuotasDelMes: Math.round(totalCuotasDelMes * 100) / 100,
+      cuotasVencidas,
+      totalCuotasVencidas: Math.round(totalCuotasVencidas * 100) / 100,
+      totalCuotasPendientes: Math.round((totalCuotasDelMes + totalCuotasVencidas) * 100) / 100,
+      fechaCierre: fechaCierreActual.toISOString().split('T')[0],
+      fechaPago: fechaPagoActual.toISOString().split('T')[0]
+    };
+  },
+
+  /**
+   * Calcula el estado de cuenta completo de una tarjeta
+   * Separa: saldo rotativo (compras sin cuotas) + cuotas del mes
+   * Incluye crédito bloqueado por compras en cuotas activas
+   * @param {Array} transacciones - Lista de transacciones
+   * @param {Object} tarjeta - Objeto tarjeta
+   * @returns {Object} Estado de cuenta desglosado
+   */
+  calcularEstadoCuentaTarjeta: (transacciones, tarjeta) => {
+    // El saldoActual de la tarjeta ahora solo representa compras SIN cuotas (rotativo)
+    const saldoRotativo = tarjeta.saldoActual || 0;
+
+    // Obtener cuotas del mes
+    const cuotasInfo = Calculations.calcularCuotasDelMes(transacciones, tarjeta.id, tarjeta);
+
+    // Calcular crédito bloqueado por cuotas pendientes
+    // El crédito se bloquea por el monto TOTAL de cuotas restantes, no solo las del mes
+    const comprasConCuotas = transacciones.filter(t =>
+      t.esCuotas &&
+      parseInt(t.metodoPago) === parseInt(tarjeta.id) &&
+      t.cuotasInfo.cuotasRestantes > 0
+    );
+
+    // Crédito bloqueado = suma de (cuotas restantes * monto por cuota) para cada compra
+    const creditoBloqueado = comprasConCuotas.reduce((sum, compra) => {
+      // Calcular el monto pendiente real considerando pagos parciales
+      const cuotasPendientes = compra.cuotasInfo.fechasCobro.filter(c =>
+        c.estado !== 'pagada'
+      );
+      const montoBloqueado = cuotasPendientes.reduce((s, c) =>
+        s + (c.montoPendiente || c.monto), 0
+      );
+      return sum + montoBloqueado;
+    }, 0);
+
+    // Crédito disponible = límite - rotativo - crédito bloqueado por cuotas
+    const creditoDisponible = Math.max(0, tarjeta.limite - saldoRotativo - creditoBloqueado);
+
+    // Pago total del mes = rotativo + cuotas del mes + cuotas vencidas
+    const pagoTotalMes = saldoRotativo + cuotasInfo.totalCuotasPendientes;
+
+    // Pago mínimo = cuotas del mes (obligatorias) + rotativo/36 (mínimo legal)
+    // Las cuotas son obligatorias para no perder el beneficio de cuotas sin intereses
+    const minimoRotativo = saldoRotativo > 0 ? Math.max(saldoRotativo / 36, 25) : 0;
+    const pagoMinimo = Math.max(
+      cuotasInfo.totalCuotasPendientes + minimoRotativo,
+      25 // Mínimo absoluto
+    );
+
+    return {
+      saldoRotativo: Math.round(saldoRotativo * 100) / 100,
+      cuotasDelMes: cuotasInfo.cuotasDelMes,
+      totalCuotasDelMes: cuotasInfo.totalCuotasDelMes,
+      cuotasVencidas: cuotasInfo.cuotasVencidas,
+      totalCuotasVencidas: cuotasInfo.totalCuotasVencidas,
+      totalCuotasPendientes: cuotasInfo.totalCuotasPendientes,
+      creditoBloqueado: Math.round(creditoBloqueado * 100) / 100,
+      creditoDisponible: Math.round(creditoDisponible * 100) / 100,
+      creditoUsado: Math.round((saldoRotativo + creditoBloqueado) * 100) / 100,
+      pagoTotalMes: Math.round(pagoTotalMes * 100) / 100,
+      pagoMinimo: Math.round(Math.min(pagoMinimo, pagoTotalMes) * 100) / 100,
+      fechaCierre: cuotasInfo.fechaCierre,
+      fechaPago: cuotasInfo.fechaPago,
+      tieneCuotas: cuotasInfo.cuotasDelMes.length > 0 || cuotasInfo.cuotasVencidas.length > 0,
+      comprasEnCuotas: comprasConCuotas.length
+    };
+  },
+
+  /**
+   * Procesa el pago de una tarjeta de crédito
+   * Prioriza: 1) Cuotas vencidas, 2) Cuotas del mes, 3) Saldo rotativo
+   * @param {Array} transacciones - Lista de transacciones
+   * @param {Object} tarjeta - Objeto tarjeta
+   * @param {number} montoPago - Monto a pagar
+   * @returns {Object} Resultado del pago con transacciones actualizadas
+   */
+  procesarPagoTarjeta: (transacciones, tarjeta, montoPago) => {
+    const estadoCuenta = Calculations.calcularEstadoCuentaTarjeta(transacciones, tarjeta);
+    let montoRestante = montoPago;
+    let transaccionesActualizadas = [...transacciones];
+
+    const detallesPago = {
+      cuotasPagadas: [],
+      montoCuotasPagado: 0,
+      montoRotativoPagado: 0,
+      nuevoSaldoRotativo: estadoCuenta.saldoRotativo,
+      cuotasAfectadas: 0
+    };
+
+    // 1. Primero pagar cuotas vencidas (orden: más antiguas primero)
+    const todasLasCuotas = [...estadoCuenta.cuotasVencidas, ...estadoCuenta.cuotasDelMes];
+
+    // Ordenar por fecha (más antigua primero)
+    todasLasCuotas.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+    for (const cuotaInfo of todasLasCuotas) {
+      if (montoRestante <= 0) break;
+
+      const montoCuota = cuotaInfo.monto;
+
+      if (montoRestante >= montoCuota) {
+        // Pagar cuota completa
+        montoRestante -= montoCuota;
+        detallesPago.montoCuotasPagado += montoCuota;
+        detallesPago.cuotasAfectadas++;
+
+        detallesPago.cuotasPagadas.push({
+          descripcion: cuotaInfo.descripcion,
+          cuota: `${cuotaInfo.numeroCuota}/${cuotaInfo.totalCuotas}`,
+          monto: montoCuota,
+          completa: true
+        });
+
+        // Marcar cuota como pagada en la transacción
+        const idxTransaccion = transaccionesActualizadas.findIndex(t => t.id === cuotaInfo.transaccionId);
+        if (idxTransaccion !== -1) {
+          const t = transaccionesActualizadas[idxTransaccion];
+          const idxCuota = t.cuotasInfo.fechasCobro.findIndex(c => c.cuota === cuotaInfo.numeroCuota);
+          if (idxCuota !== -1) {
+            transaccionesActualizadas[idxTransaccion] = {
+              ...t,
+              cuotasInfo: {
+                ...t.cuotasInfo,
+                cuotasPagadas: t.cuotasInfo.cuotasPagadas + 1,
+                cuotasRestantes: t.cuotasInfo.cuotasRestantes - 1,
+                fechasCobro: t.cuotasInfo.fechasCobro.map((c, i) =>
+                  i === idxCuota ? { ...c, estado: 'pagada', montoPendiente: 0 } : c
+                ),
+                ultimaActualizacion: new Date().toISOString()
+              }
+            };
+          }
+        }
+      } else if (montoRestante > 0) {
+        // Pago parcial de cuota
+        const montoParcial = montoRestante;
+        detallesPago.montoCuotasPagado += montoParcial;
+
+        detallesPago.cuotasPagadas.push({
+          descripcion: cuotaInfo.descripcion,
+          cuota: `${cuotaInfo.numeroCuota}/${cuotaInfo.totalCuotas}`,
+          monto: montoParcial,
+          completa: false,
+          pendiente: montoCuota - montoParcial
+        });
+
+        // Marcar cuota como parcial en la transacción
+        const idxTransaccion = transaccionesActualizadas.findIndex(t => t.id === cuotaInfo.transaccionId);
+        if (idxTransaccion !== -1) {
+          const t = transaccionesActualizadas[idxTransaccion];
+          const idxCuota = t.cuotasInfo.fechasCobro.findIndex(c => c.cuota === cuotaInfo.numeroCuota);
+          if (idxCuota !== -1) {
+            transaccionesActualizadas[idxTransaccion] = {
+              ...t,
+              cuotasInfo: {
+                ...t.cuotasInfo,
+                fechasCobro: t.cuotasInfo.fechasCobro.map((c, i) =>
+                  i === idxCuota ? { ...c, estado: 'parcial', montoPendiente: montoCuota - montoParcial } : c
+                ),
+                ultimaActualizacion: new Date().toISOString()
+              }
+            };
+          }
+        }
+
+        montoRestante = 0;
+      }
+    }
+
+    // 2. Luego aplicar el resto al saldo rotativo
+    if (montoRestante > 0 && estadoCuenta.saldoRotativo > 0) {
+      const pagoRotativo = Math.min(montoRestante, estadoCuenta.saldoRotativo);
+      detallesPago.montoRotativoPagado = pagoRotativo;
+      detallesPago.nuevoSaldoRotativo = estadoCuenta.saldoRotativo - pagoRotativo;
+      montoRestante -= pagoRotativo;
+    }
+
+    return {
+      transaccionesActualizadas,
+      detallesPago,
+      nuevoSaldoTarjeta: Math.round(detallesPago.nuevoSaldoRotativo * 100) / 100,
+      montoSobrante: Math.round(montoRestante * 100) / 100
+    };
+  },
+
+  /**
    * Calcula el progreso de una meta
    * @param {Object} meta - Objeto de meta
    * @returns {Object} Información del progreso

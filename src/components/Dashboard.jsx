@@ -216,88 +216,51 @@ const Dashboard = ({ userData, onUpdateData }) => {
   const handlePagarTarjeta = (monto) => {
     if (!tarjetaPagar) return;
 
-    // Identificar compras con cuotas pendientes en esta tarjeta
-    const comprasConCuotas = userData.transacciones.filter(t =>
-      t.esCuotas &&
-      parseInt(t.metodoPago) === tarjetaPagar.id &&
-      t.cuotasInfo.cuotasRestantes > 0
+    // Usar la nueva función procesarPagoTarjeta para manejar el pago inteligentemente
+    const resultado = Calculations.procesarPagoTarjeta(
+      userData.transacciones,
+      tarjetaPagar,
+      monto
     );
 
-    const totalCuotasPendientes = comprasConCuotas.reduce((sum, c) =>
-      sum + (c.cuotasInfo.cuotasRestantes * c.cuotasInfo.montoPorCuota), 0
-    );
+    // Crear transacción de pago con descripción detallada
+    let descripcionPago = `Pago ${tarjetaPagar.nombre}`;
+    const detalles = [];
 
-    let transaccionPago = {
+    if (resultado.detallesPago.cuotasAfectadas > 0) {
+      const resumenCuotas = resultado.detallesPago.cuotasPagadas
+        .map(c => `${c.descripcion} (${c.cuota})`)
+        .join(', ');
+      detalles.push(`${resultado.detallesPago.cuotasAfectadas} cuota(s): ${resumenCuotas}`);
+    }
+
+    if (resultado.detallesPago.montoRotativoPagado > 0) {
+      detalles.push(`Rotativo: S/ ${resultado.detallesPago.montoRotativoPagado.toFixed(2)}`);
+    }
+
+    if (detalles.length > 0) {
+      descripcionPago += ` - ${detalles.join(' | ')}`;
+    }
+
+    const transaccionPago = {
       id: Date.now(),
       tipo: 'PagoTarjeta',
       monto: monto,
-      descripcion: `Pago ${tarjetaPagar.nombre}`,
+      descripcion: descripcionPago,
       categoria: 'Pago Tarjeta',
       metodoPago: 'Efectivo',
       fecha: new Date().toISOString().split('T')[0],
-      tarjetaId: tarjetaPagar.id
+      tarjetaId: tarjetaPagar.id,
+      detallesPago: resultado.detallesPago
     };
 
-    let nuevasTransacciones = [...userData.transacciones, transaccionPago];
+    // Agregar transacción de pago a las transacciones ya actualizadas
+    const nuevasTransacciones = [...resultado.transaccionesActualizadas, transaccionPago];
 
-    // Si hay cuotas pendientes y el monto puede cubrir alguna, preguntar
-    if (comprasConCuotas.length > 0 && monto > 0 && totalCuotasPendientes > 0) {
-      const mensaje = `Tienes S/ ${totalCuotasPendientes.toFixed(2)} en ${comprasConCuotas.length} compra(s) en cuotas pendientes.\n\n¿Deseas usar parte del pago (S/ ${monto.toFixed(2)}) para pagar cuotas automáticamente?\n\nSe pagarán cuotas completas empezando por las más antiguas.`;
-
-      if (confirm(mensaje)) {
-        // Guardar estado anterior para comparar
-        const transaccionesAntes = [...nuevasTransacciones];
-
-        // Pagar cuotas automáticamente
-        nuevasTransacciones = Calculations.pagarCuotasAutomaticamente(
-          nuevasTransacciones,
-          tarjetaPagar.id,
-          monto
-        );
-
-        // Calcular cuántas cuotas se pagaron
-        let cuotasPagadasTotal = 0;
-        const comprasAfectadas = [];
-
-        comprasConCuotas.forEach(compra => {
-          const transaccionActualizada = nuevasTransacciones.find(t => t.id === compra.id);
-          if (transaccionActualizada) {
-            const cuotasPagadasNuevas = transaccionActualizada.cuotasInfo.cuotasPagadas - compra.cuotasInfo.cuotasPagadas;
-            if (cuotasPagadasNuevas > 0) {
-              cuotasPagadasTotal += cuotasPagadasNuevas;
-              comprasAfectadas.push({
-                descripcion: compra.descripcion,
-                cuotas: cuotasPagadasNuevas,
-                monto: cuotasPagadasNuevas * compra.cuotasInfo.montoPorCuota
-              });
-            }
-          }
-        });
-
-        // Actualizar descripción de transacción de pago con info de cuotas
-        if (cuotasPagadasTotal > 0) {
-          const detalleCompras = comprasAfectadas.map(c =>
-            `${c.descripcion} (${c.cuotas} cuota${c.cuotas > 1 ? 's' : ''})`
-          ).join(', ');
-
-          nuevasTransacciones = nuevasTransacciones.map(t => {
-            if (t.id === transaccionPago.id) {
-              return {
-                ...t,
-                descripcion: `${t.descripcion} - Incluye pago de ${cuotasPagadasTotal} cuota(s): ${detalleCompras}`,
-                esPagoAutomatico: true,
-                cuotasAfectadas: comprasAfectadas
-              };
-            }
-            return t;
-          });
-        }
-      }
-    }
-
+    // Actualizar saldo de la tarjeta (solo el rotativo, las cuotas se actualizaron internamente)
     const tarjetasActualizadas = userData.tarjetas.map(t => {
       if (t.id === tarjetaPagar.id) {
-        return { ...t, saldoActual: Math.max(0, t.saldoActual - monto) };
+        return { ...t, saldoActual: resultado.nuevoSaldoTarjeta };
       }
       return t;
     });
@@ -305,7 +268,22 @@ const Dashboard = ({ userData, onUpdateData }) => {
     onUpdateData({ ...userData, transacciones: nuevasTransacciones, tarjetas: tarjetasActualizadas });
     setModalPagoTarjeta(false);
     setTarjetaPagar(null);
-    alert(`Pago de S/ ${monto.toFixed(2)} registrado correctamente`);
+
+    // Mostrar resumen del pago
+    let mensajeResumen = `Pago de S/ ${monto.toFixed(2)} registrado.\n\n`;
+
+    if (resultado.detallesPago.montoCuotasPagado > 0) {
+      mensajeResumen += `Cuotas pagadas: S/ ${resultado.detallesPago.montoCuotasPagado.toFixed(2)}\n`;
+      resultado.detallesPago.cuotasPagadas.forEach(c => {
+        mensajeResumen += `  • ${c.descripcion} (${c.cuota}): S/ ${c.monto.toFixed(2)}${c.completa ? '' : ` (parcial, pendiente: S/ ${c.pendiente.toFixed(2)})`}\n`;
+      });
+    }
+
+    if (resultado.detallesPago.montoRotativoPagado > 0) {
+      mensajeResumen += `\nRotativo pagado: S/ ${resultado.detallesPago.montoRotativoPagado.toFixed(2)}`;
+    }
+
+    alert(mensajeResumen);
   };
 
   // Handlers de Transacciones
@@ -314,7 +292,8 @@ const Dashboard = ({ userData, onUpdateData }) => {
     let nuevasTarjetas = userData.tarjetas;
     if (transaccionEditar) {
       const transaccionAntigua = userData.transacciones.find(t => t.id === transaccion.id);
-      if (transaccionAntigua && transaccionAntigua.tipo === 'Gasto' && transaccionAntigua.metodoPago !== 'Efectivo') {
+      // Solo revertir saldo si la transacción antigua NO era en cuotas
+      if (transaccionAntigua && transaccionAntigua.tipo === 'Gasto' && transaccionAntigua.metodoPago !== 'Efectivo' && !transaccionAntigua.esCuotas) {
         nuevasTarjetas = nuevasTarjetas.map(t => {
           if (t.id === parseInt(transaccionAntigua.metodoPago)) {
             return { ...t, saldoActual: t.saldoActual - transaccionAntigua.monto };
@@ -326,7 +305,9 @@ const Dashboard = ({ userData, onUpdateData }) => {
     } else {
       nuevasTransacciones = [...userData.transacciones, transaccion];
     }
-    if (transaccion.tipo === 'Gasto' && transaccion.metodoPago !== 'Efectivo') {
+    // IMPORTANTE: Solo agregar al saldo rotativo si NO es compra en cuotas
+    // Las compras en cuotas se trackean por separado y solo se cobran mensualmente
+    if (transaccion.tipo === 'Gasto' && transaccion.metodoPago !== 'Efectivo' && !transaccion.esCuotas) {
       nuevasTarjetas = nuevasTarjetas.map(t => {
         if (t.id === parseInt(transaccion.metodoPago)) {
           return { ...t, saldoActual: t.saldoActual + transaccion.monto };
@@ -371,15 +352,12 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
     let nuevasTarjetas = userData.tarjetas;
 
-    // Liberar crédito de tarjeta si es gasto con tarjeta
-    if (transaccion && transaccion.tipo === 'Gasto' && transaccion.metodoPago !== 'Efectivo') {
+    // Liberar crédito de tarjeta si es gasto con tarjeta SIN CUOTAS (rotativo)
+    // Las compras en cuotas no afectan saldoActual, solo se trackean por separado
+    if (transaccion && transaccion.tipo === 'Gasto' && transaccion.metodoPago !== 'Efectivo' && !transaccion.esCuotas) {
       nuevasTarjetas = nuevasTarjetas.map(t => {
         if (t.id === parseInt(transaccion.metodoPago)) {
-          // Si es compra en cuotas, solo liberar el monto restante
-          const montoALiberar = transaccion.esCuotas
-            ? (transaccion.cuotasInfo.cuotasRestantes * transaccion.cuotasInfo.montoPorCuota)
-            : transaccion.monto;
-          return { ...t, saldoActual: Math.max(0, t.saldoActual - montoALiberar) };
+          return { ...t, saldoActual: Math.max(0, t.saldoActual - transaccion.monto) };
         }
         return t;
       });
@@ -946,19 +924,11 @@ const Dashboard = ({ userData, onUpdateData }) => {
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {userData.tarjetas.map(tarjeta => {
-                  const utilizacion = ((tarjeta.saldoActual / tarjeta.limite) * 100).toFixed(1);
-                  const disponible = tarjeta.limite - tarjeta.saldoActual;
+                  // Usar el nuevo estado de cuenta calculado
+                  const estadoCuenta = Calculations.calcularEstadoCuentaTarjeta(userData.transacciones, tarjeta);
+                  // Utilización = crédito usado (rotativo + bloqueado por cuotas) / límite
+                  const utilizacion = ((estadoCuenta.creditoUsado / tarjeta.limite) * 100).toFixed(1);
                   const bancoConfig = BANCOS.find(b => b.nombre === tarjeta.banco) || BANCOS[0];
-
-                  // Calcular compras en cuotas de esta tarjeta
-                  const comprasEnCuotas = userData.transacciones.filter(t =>
-                    t.esCuotas &&
-                    parseInt(t.metodoPago) === tarjeta.id &&
-                    t.cuotasInfo.cuotasRestantes > 0
-                  );
-                  const totalEnCuotas = comprasEnCuotas.reduce((sum, c) =>
-                    sum + (c.cuotasInfo.cuotasRestantes * c.cuotasInfo.montoPorCuota), 0
-                  );
 
                   return (
                     <div key={tarjeta.id} className={`bg-gradient-to-br ${bancoConfig.color} rounded-2xl shadow-xl p-6 text-white`}>
@@ -971,33 +941,60 @@ const Dashboard = ({ userData, onUpdateData }) => {
                       </div>
                       <p className="text-lg font-mono mb-6">•••• •••• •••• {tarjeta.ultimos4 || '••••'}</p>
                       <div className="space-y-3 mb-4">
+                        {/* Crédito usado y disponible */}
                         <div>
                           <div className="flex justify-between text-sm mb-2">
-                            <span>Usado: S/ {tarjeta.saldoActual.toFixed(2)}</span>
-                            <span>Disponible: S/ {disponible.toFixed(2)}</span>
+                            <span>Usado: S/ {estadoCuenta.creditoUsado.toFixed(2)}</span>
+                            <span className="text-green-200">Disponible: S/ {estadoCuenta.creditoDisponible.toFixed(2)}</span>
                           </div>
-                          {comprasEnCuotas.length > 0 && (
-                            <div className="text-xs opacity-90 mb-2">
-                              └─ En cuotas: S/ {totalEnCuotas.toFixed(2)} ({comprasEnCuotas.reduce((sum, c) => sum + c.cuotasInfo.cuotasRestantes, 0)} cuotas)
-                            </div>
-                          )}
+                          {/* Desglose del crédito usado */}
+                          <div className="text-xs space-y-1 mb-2 opacity-90">
+                            {estadoCuenta.saldoRotativo > 0 && (
+                              <div className="flex justify-between text-blue-200">
+                                <span>• Compras sin cuotas</span>
+                                <span>S/ {estadoCuenta.saldoRotativo.toFixed(2)}</span>
+                              </div>
+                            )}
+                            {estadoCuenta.creditoBloqueado > 0 && (
+                              <div className="flex justify-between text-purple-200">
+                                <span>• Bloqueado en cuotas ({estadoCuenta.comprasEnCuotas})</span>
+                                <span>S/ {estadoCuenta.creditoBloqueado.toFixed(2)}</span>
+                              </div>
+                            )}
+                          </div>
                           <div className="w-full bg-white/20 rounded-full h-2.5">
                             <div className="bg-white h-2.5 rounded-full transition-all" style={{ width: `${Math.min(utilizacion, 100)}%` }}></div>
                           </div>
                           <div className="text-xs mt-1 opacity-80">Límite: S/ {tarjeta.limite.toFixed(2)}</div>
                         </div>
 
-                        {comprasEnCuotas.length > 0 && (
+                        {/* Pago del mes (si hay algo por pagar) */}
+                        {estadoCuenta.pagoTotalMes > 0 && (
                           <div className="pt-2 border-t border-white/20">
-                            <p className="text-xs font-semibold mb-2 opacity-90">Compras en cuotas:</p>
-                            {comprasEnCuotas.slice(0, 2).map(compra => (
-                              <div key={compra.id} className="text-xs opacity-80 mb-1">
-                                • {compra.descripcion}: {compra.cuotasInfo.cuotasRestantes}/{compra.cuotasInfo.numeroCuotas} restantes
-                              </div>
-                            ))}
-                            {comprasEnCuotas.length > 2 && (
-                              <div className="text-xs opacity-70">+ {comprasEnCuotas.length - 2} más...</div>
-                            )}
+                            <div className="flex justify-between text-sm mb-1">
+                              <span className="font-medium">Pago del mes</span>
+                              <span className="font-bold">S/ {estadoCuenta.pagoTotalMes.toFixed(2)}</span>
+                            </div>
+                            <div className="text-xs space-y-0.5 opacity-80">
+                              {estadoCuenta.totalCuotasVencidas > 0 && (
+                                <div className="flex justify-between text-red-200">
+                                  <span>Cuotas vencidas</span>
+                                  <span>S/ {estadoCuenta.totalCuotasVencidas.toFixed(2)}</span>
+                                </div>
+                              )}
+                              {estadoCuenta.totalCuotasDelMes > 0 && (
+                                <div className="flex justify-between text-amber-200">
+                                  <span>Cuotas del mes</span>
+                                  <span>S/ {estadoCuenta.totalCuotasDelMes.toFixed(2)}</span>
+                                </div>
+                              )}
+                              {estadoCuenta.saldoRotativo > 0 && (
+                                <div className="flex justify-between">
+                                  <span>Sin cuotas</span>
+                                  <span>S/ {estadoCuenta.saldoRotativo.toFixed(2)}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
 
@@ -1012,7 +1009,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                             setTarjetaPagar(tarjeta);
                             setModalPagoTarjeta(true);
                           }}
-                          disabled={tarjeta.saldoActual === 0}
+                          disabled={estadoCuenta.pagoTotalMes === 0}
                           className="bg-green-500/80 hover:bg-green-500 py-2.5 rounded-lg text-sm font-semibold disabled:bg-white/10 disabled:cursor-not-allowed"
                         >
                           Pagar
@@ -1799,7 +1796,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
       <Modal isOpen={modalPagoTarjeta} onClose={() => { setModalPagoTarjeta(false); setTarjetaPagar(null); }} title={`Pagar tarjeta ${tarjetaPagar?.nombre || 'Tarjeta'}`}>
         <Suspense fallback={<LoadingSpinner />}>
-          {tarjetaPagar && <FormularioPagoTarjeta tarjeta={tarjetaPagar} efectivoDisponible={efectivoDisponible} onPagar={handlePagarTarjeta} onClose={() => { setModalPagoTarjeta(false); setTarjetaPagar(null); }} />}
+          {tarjetaPagar && <FormularioPagoTarjeta tarjeta={tarjetaPagar} transacciones={userData.transacciones} efectivoDisponible={efectivoDisponible} onPagar={handlePagarTarjeta} onClose={() => { setModalPagoTarjeta(false); setTarjetaPagar(null); }} />}
         </Suspense>
       </Modal>
 
