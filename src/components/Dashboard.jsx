@@ -561,8 +561,8 @@ const Dashboard = ({ userData, onUpdateData }) => {
     setTransaccionPagarAdelantado(null);
 
     const mensajeExito = montoParcial > 0
-      ? `Pago registrado correctamente\n\nTarjeta: ${cuotasAPagar} cuota(s) completa(s) pagadas\nMonto: S/ ${montoParcial.toFixed(2)} abonados a la siguiente cuota\n\nFalta S/ ${(transaccionPagarAdelantado.cuotasInfo.montoPorCuota - montoParcial).toFixed(2)} en la próxima cuota`
-      : `Pago adelantado registrado correctamente\n\nTarjeta: ${cuotasAPagar} cuota(s) pagadas\nMonto: S/ ${montoTotal.toFixed(2)} liberados de tu tarjeta`;
+      ? `Pago registrado correctamente\n\n${cuotasAPagar} cuota(s) completa(s) pagadas\nS/ ${montoParcial.toFixed(2)} abonados a la siguiente cuota\n\nFalta S/ ${(transaccionPagarAdelantado.cuotasInfo.montoPorCuota - montoParcial).toFixed(2)} en la próxima cuota`
+      : `Pago adelantado registrado correctamente\n\n${cuotasAPagar} cuota(s) pagadas\nS/ ${montoTotal.toFixed(2)} liberados de tu tarjeta`;
 
     alert(mensajeExito);
   };
@@ -610,9 +610,9 @@ const Dashboard = ({ userData, onUpdateData }) => {
     const progreso = Calculations.calcularProgresoMeta(metaActualizada);
 
     if (progreso.alcanzada && monto > 0) {
-      alert(`¡Felicidades! Has completado tu meta "${metaAportar.nombre}"\n\nMonto: Ahorrado: S/ ${metaActualizada.montoAhorrado.toFixed(2)}`);
+      alert(`¡Felicidades! Has completado tu meta "${metaAportar.nombre}"\n\nAhorrado: S/ ${metaActualizada.montoAhorrado.toFixed(2)}`);
     } else {
-      alert(`${tipoOperacion} registrado correctamente\n\nMonto: Nuevo saldo en "${metaAportar.nombre}": S/ ${metaActualizada.montoAhorrado.toFixed(2)}\nProgreso: ${progreso.porcentaje}%`);
+      alert(`${tipoOperacion} registrado correctamente\n\nNuevo saldo en "${metaAportar.nombre}": S/ ${metaActualizada.montoAhorrado.toFixed(2)}\nProgreso: ${progreso.porcentaje}%`);
     }
   };
 
@@ -866,7 +866,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                           }}
                           className="text-sm text-accent hover:text-accent/80 font-medium mt-1"
                         >
-                          Tarjeta: Pagar
+                          Pagar tarjeta
                         </button>
                       </div>
                     </div>
@@ -919,7 +919,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
         {activeTab === 'tarjetas' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className={`text-2xl font-bold ${textClass}`}>Tarjeta: Mis Tarjetas</h2>
+              <h2 className={`text-2xl font-bold ${textClass}`}>Mis Tarjetas</h2>
               <button
                 onClick={() => {
                   setTarjetaEditar(null);
@@ -989,7 +989,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
                         {comprasEnCuotas.length > 0 && (
                           <div className="pt-2 border-t border-white/20">
-                            <p className="text-xs font-semibold mb-2 opacity-90">📦 Compras en cuotas:</p>
+                            <p className="text-xs font-semibold mb-2 opacity-90">Compras en cuotas:</p>
                             {comprasEnCuotas.slice(0, 2).map(compra => (
                               <div key={compra.id} className="text-xs opacity-80 mb-1">
                                 • {compra.descripcion}: {compra.cuotasInfo.cuotasRestantes}/{compra.cuotasInfo.numeroCuotas} restantes
@@ -1003,20 +1003,10 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
                         <div className="flex justify-between text-sm pt-2 border-t border-white/20">
                           <span>Cierre: día {tarjeta.fechaCierre}</span>
-                          <span>Tarjeta: Pago: día {tarjeta.fechaPago}</span>
+                          <span>Pago: día {tarjeta.fechaPago}</span>
                         </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        <button
-                          onClick={() => {
-                            setTipoTransaccion('Gasto');
-                            setTransaccionEditar(null);
-                            setModalTransaccion(true);
-                          }}
-                          className="bg-white/20 hover:bg-white/30 py-2.5 rounded-lg text-sm font-semibold"
-                        >
-                          Gasto
-                        </button>
+                      <div className="grid grid-cols-2 gap-2">
                         <button
                           onClick={() => {
                             setTarjetaPagar(tarjeta);
@@ -1141,7 +1131,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                                     ? 'bg-amber-100 text-amber-800'
                                     : 'bg-purple-100 text-purple-800'
                                 }`}>
-                                  Tarjeta: {t.cuotasInfo.cuotasPagadas}/{t.cuotasInfo.numeroCuotas} cuotas
+                                  {t.cuotasInfo.cuotasPagadas}/{t.cuotasInfo.numeroCuotas} cuotas
                                   {t.cuotasInfo.fechasCobro && t.cuotasInfo.fechasCobro.some(c => c.estado === 'parcial') && (
                                     <span className="ml-1" title="Tiene cuota pagada parcialmente"><AlertTriangle size={12} className="inline" /></span>
                                   )}
@@ -1159,7 +1149,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                                     }}
                                     className="mt-1 text-xs text-purple-600 hover:text-purple-800 font-semibold"
                                   >
-                                    Tarjeta: Pagar {t.cuotasInfo.cuotasRestantes} cuota(s) adelantada(s)
+                                    Pagar tarjeta {t.cuotasInfo.cuotasRestantes} cuota(s) adelantada(s)
                                   </button>
                                 )}
                                 {t.esCuotas && t.cuotasInfo.pagosAdelantados && t.cuotasInfo.pagosAdelantados.length > 0 && (
@@ -1371,7 +1361,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
 
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className={`text-lg font-bold ${textClass}`}>Monto: Efectivo Actual</h3>
+                  <h3 className={`text-lg font-bold ${textClass}`}>Efectivo Actual</h3>
                   <p className={`text-4xl font-bold ${proyeccion.saldoInicial >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     S/ {proyeccion.saldoInicial.toFixed(2)}
                   </p>
@@ -1397,7 +1387,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-gray-800">{e.descripcion}</p>
                           {e.recurrente && <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded">♻️ Auto</span>}
-                          {e.esCuota && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold">Tarjeta: Cuota</span>}
+                          {e.esCuota && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-semibold">Cuota</span>}
                         </div>
                         <p className="text-sm text-gray-600 mt-1">
                           <Calendar size={14} className="inline" />  {e.fecha.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
@@ -1453,7 +1443,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
             {/* Panel de Información de Ahorro */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-6 text-white">
-                <p className="text-sm opacity-80 mb-1">Monto: Disponible para Ahorrar</p>
+                <p className="text-sm opacity-80 mb-1">Disponible para Ahorrar</p>
                 <p className="text-3xl font-bold mb-2">S/ {disponibleParaAhorrar.toFixed(2)}</p>
                 <p className="text-xs opacity-80">
                   Efectivo - Deudas - Dinero en metas
@@ -1617,7 +1607,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
                             }}
                             className="bg-white/20 hover:bg-white/30 py-2.5 rounded-lg text-sm font-semibold"
                           >
-                            Monto: Aportar
+                            Aportar
                           </button>
                           <button
                             onClick={() => {
@@ -1807,13 +1797,13 @@ const Dashboard = ({ userData, onUpdateData }) => {
         </Suspense>
       </Modal>
 
-      <Modal isOpen={modalPagoTarjeta} onClose={() => { setModalPagoTarjeta(false); setTarjetaPagar(null); }} title={`Tarjeta: Pagar ${tarjetaPagar?.nombre || 'Tarjeta'}`}>
+      <Modal isOpen={modalPagoTarjeta} onClose={() => { setModalPagoTarjeta(false); setTarjetaPagar(null); }} title={`Pagar tarjeta ${tarjetaPagar?.nombre || 'Tarjeta'}`}>
         <Suspense fallback={<LoadingSpinner />}>
           {tarjetaPagar && <FormularioPagoTarjeta tarjeta={tarjetaPagar} efectivoDisponible={efectivoDisponible} onPagar={handlePagarTarjeta} onClose={() => { setModalPagoTarjeta(false); setTarjetaPagar(null); }} />}
         </Suspense>
       </Modal>
 
-      <Modal isOpen={modalPagoAdelantado} onClose={() => { setModalPagoAdelantado(false); setTransaccionPagarAdelantado(null); }} title="Tarjeta: Pago Adelantado de Cuotas">
+      <Modal isOpen={modalPagoAdelantado} onClose={() => { setModalPagoAdelantado(false); setTransaccionPagarAdelantado(null); }} title="Pago Adelantado de Cuotas">
         <Suspense fallback={<LoadingSpinner />}>
           {transaccionPagarAdelantado && <FormularioPagoAdelantado transaccion={transaccionPagarAdelantado} efectivoDisponible={efectivoDisponible} onPagar={handlePagarCuotasAdelantadas} onClose={() => { setModalPagoAdelantado(false); setTransaccionPagarAdelantado(null); }} />}
         </Suspense>
@@ -1825,7 +1815,7 @@ const Dashboard = ({ userData, onUpdateData }) => {
         </Suspense>
       </Modal>
 
-      <Modal isOpen={modalAporteMeta} onClose={() => { setModalAporteMeta(false); setMetaAportar(null); }} title={`Monto: ${metaAportar?.nombre || 'Meta de Ahorro'}`}>
+      <Modal isOpen={modalAporteMeta} onClose={() => { setModalAporteMeta(false); setMetaAportar(null); }} title={metaAportar?.nombre || 'Aportar a Meta'}>
         <Suspense fallback={<LoadingSpinner />}>
           {metaAportar && <FormularioAporteMeta meta={metaAportar} disponibleParaAhorrar={disponibleParaAhorrar} onAportar={handleAportarMeta} onClose={() => { setModalAporteMeta(false); setMetaAportar(null); }} />}
         </Suspense>
